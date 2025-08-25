@@ -1,10 +1,10 @@
-// 🌸🐱 Aitashii Powerlifting Tracker - FIREBASE ENABLED VERSION
-// Real-time sync between devices with GitHub authentication
+// 🌸🐱 Aitashii Powerlifting Tracker - FIXED VERSION
+// Fixed: Calendar clicks, Auto-updating date, Firebase auth
 
 let appData = {
-  version: '2.0.0',
+  version: '2.1.0',
   lastUpdated: null,
-  currentDate: "2025-08-25",
+  currentDate: "2025-08-25", // Will be auto-updated
   
   // Firebase sync status
   syncStatus: {
@@ -144,37 +144,95 @@ let appData = {
 
 let charts = {};
 let firebaseUnsubscribe = null;
+let autoDateUpdateInterval = null;
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🌸 Aitashii Powerlifting Tracker with Firebase initializing...');
+  console.log('🌸 Aitashii Powerlifting Tracker with AUTO-DATE initializing...');
   
   try {
-    // Initialize Firebase auth first
+    // Initialize auto-updating date system FIRST
+    initializeAutoDateSystem();
+    
+    // Initialize Firebase auth
     setTimeout(() => {
       initializeFirebaseAuth();
       
       // Then initialize rest of app
       loadDataFromStorage();
       initializeHamburgerMenuFixed();
-      initializeDateSystem();
       initializeAutoBackup();
       initializeForms();
       initializeCharts();
-      initializeTrainingCalendar();
+      initializeTrainingCalendarFixed(); // FIXED VERSION
       
       updateDashboard();
       updateAllDateDependencies();
       
-      console.log('✅ Aitashii Powerlifting Tracker with Firebase ready!');
-    }, 1000); // Wait for Firebase to be available
+      console.log('✅ Aitashii Powerlifting Tracker with AUTO-DATE ready!');
+    }, 1000);
     
   } catch (error) {
     console.error('❌ Error initializing app:', error);
   }
 });
 
-// ==== FIREBASE AUTHENTICATION & SYNC ====
+// ==== AUTO-UPDATING DATE SYSTEM (Zurich Timezone) ====
+
+function initializeAutoDateSystem() {
+  console.log('📅 Initializing AUTO-UPDATING date system (Zurich timezone)...');
+  
+  // Update date immediately
+  updateCurrentDateToNow();
+  
+  // Update every minute
+  autoDateUpdateInterval = setInterval(() => {
+    updateCurrentDateToNow();
+  }, 60000); // Every 60 seconds
+  
+  console.log('📅 Auto-updating date system initialized');
+}
+
+function updateCurrentDateToNow() {
+  // Get current date in Zurich timezone
+  const now = new Date();
+  const zurichTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Zurich"}));
+  const currentDateStr = zurichTime.toISOString().split('T')[0];
+  
+  // Only update if date actually changed
+  if (appData.currentDate !== currentDateStr) {
+    console.log(`📅 Auto date update: ${appData.currentDate} → ${currentDateStr}`);
+    
+    appData.currentDate = currentDateStr;
+    saveDataToStorage();
+    updateAllDateDependencies();
+  }
+  
+  // Always update time display
+  updateTimeDisplay(zurichTime);
+}
+
+function updateTimeDisplay(zurichTime) {
+  const timeString = zurichTime.toLocaleTimeString('pl-PL', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Zurich'
+  });
+  
+  const dateInfo = document.getElementById('date-info');
+  if (dateInfo) {
+    const formattedDate = formatDatePolish(appData.currentDate);
+    const dayOfWeek = getDayOfWeekPolish(new Date(appData.currentDate));
+    dateInfo.textContent = `${dayOfWeek}, ${formattedDate} • ${timeString}`;
+  }
+}
+
+// Helper function for "Today" button (now just refreshes display)
+window.setToday = function() {
+  updateCurrentDateToNow();
+}
+
+// ==== FIREBASE AUTHENTICATION & SYNC (FIXED) ====
 
 function initializeFirebaseAuth() {
   if (!window.firebaseAuth) {
@@ -183,7 +241,7 @@ function initializeFirebaseAuth() {
     return;
   }
   
-  console.log('🔥 Initializing Firebase authentication...');
+  console.log('🔥 Initializing FIXED Firebase authentication...');
   
   const loginBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
@@ -227,9 +285,9 @@ function initializeFirebaseAuth() {
     }
   });
   
-  // Setup login button
+  // Setup login button with BETTER ERROR HANDLING
   if (loginBtn) {
-    loginBtn.addEventListener('click', signInWithGitHub);
+    loginBtn.addEventListener('click', signInWithGitHubFixed);
   }
   
   // Setup logout button
@@ -237,16 +295,24 @@ function initializeFirebaseAuth() {
     logoutBtn.addEventListener('click', signOutUser);
   }
   
-  console.log('🔐 Firebase auth initialized');
+  console.log('🔐 FIXED Firebase auth initialized');
 }
 
-async function signInWithGitHub() {
+async function signInWithGitHubFixed() {
   try {
+    console.log('🔐 Attempting GitHub login...');
+    
     const provider = new window.firebaseGithubAuthProvider();
     provider.addScope('user:email');
     
+    // Add custom parameters to help with popup
+    provider.setCustomParameters({
+      allow_signup: 'true'
+    });
+    
     showSaveIndicator('🔐 Logowanie...', '#3b82f6');
     
+    // Use popup with specific settings
     const result = await window.firebaseSignInWithPopup(window.firebaseAuth, provider);
     console.log('✅ GitHub login successful:', result.user.displayName);
     
@@ -254,7 +320,27 @@ async function signInWithGitHub() {
     
   } catch (error) {
     console.error('❌ GitHub login failed:', error);
-    showSaveIndicator('❌ Błąd logowania', '#ef4444');
+    
+    // More specific error messages
+    let errorMessage = 'Nieznany błąd';
+    
+    if (error.code === 'auth/popup-closed-by-user') {
+      errorMessage = 'Popup zamknięty przez użytkownika';
+    } else if (error.code === 'auth/popup-blocked') {
+      errorMessage = 'Popup zablokowany przez przeglądarkę';
+    } else if (error.code === 'auth/cancelled-popup-request') {
+      errorMessage = 'Anulowano żądanie logowania';
+    } else if (error.code === 'auth/unauthorized-domain') {
+      errorMessage = 'Domena nie jest autoryzowana';
+    }
+    
+    console.error('Detailed error:', errorMessage, error.code);
+    showSaveIndicator(`❌ ${errorMessage}`, '#ef4444');
+    
+    // Try to help debug
+    if (error.code === 'auth/unauthorized-domain') {
+      console.error('🔧 Add this domain to Firebase Auth: aitashii.github.io');
+    }
   }
 }
 
@@ -416,16 +502,14 @@ function showSaveIndicator(text, color) {
   }, 1500);
 }
 
-// ==== FIXED HAMBURGER MENU - Works on ALL browsers ====
+// ==== FIXED HAMBURGER MENU ====
 
 function initializeHamburgerMenuFixed() {
   console.log('🍔 Initializing FIXED hamburger menu...');
   
-  // Multiple initialization attempts for compatibility
   setTimeout(() => setupHamburgerMenu(), 100);
   setTimeout(() => setupHamburgerMenu(), 500);
   
-  // Also setup on window load as fallback
   window.addEventListener('load', () => {
     setTimeout(() => setupHamburgerMenu(), 100);
   });
@@ -445,15 +529,12 @@ function setupHamburgerMenu() {
 
   console.log('✅ Setting up hamburger menu events...');
 
-  // Clear any existing event listeners - CHROME FIX
   const newHamburgerBtn = hamburgerBtn.cloneNode(true);
   hamburgerBtn.parentNode.replaceChild(newHamburgerBtn, hamburgerBtn);
   
-  // UNIVERSAL event handler for ALL browsers
   newHamburgerBtn.addEventListener('click', handleMenuToggle, false);
   newHamburgerBtn.addEventListener('touchend', handleMenuToggle, false);
   
-  // Close menu events
   if (closeMenuBtn) {
     closeMenuBtn.addEventListener('click', closeMenu, false);
     closeMenuBtn.addEventListener('touchend', closeMenu, false);
@@ -463,7 +544,6 @@ function setupHamburgerMenu() {
     menuOverlay.addEventListener('click', closeMenu, false);
   }
 
-  // Menu item navigation
   menuItems.forEach(item => {
     item.addEventListener('click', function(e) {
       e.preventDefault();
@@ -476,7 +556,6 @@ function setupHamburgerMenu() {
         showSection(section);
         closeMenu();
         
-        // Update active menu item
         menuItems.forEach(mi => mi.classList.remove('active'));
         this.classList.add('active');
       }
@@ -516,10 +595,14 @@ function setupHamburgerMenu() {
   console.log('🍔 Hamburger menu setup complete!');
 }
 
-// ==== TRAINING CALENDAR SECTION ====
+// ==== FIXED TRAINING CALENDAR ====
 
-function initializeTrainingCalendar() {
-  console.log('📅 Initializing training calendar...');
+function initializeTrainingCalendarFixed() {
+  console.log('📅 Initializing FIXED training calendar...');
+  
+  // Make sure global functions are available
+  window.changeCalendarMonth = changeCalendarMonth;
+  window.selectTrainingDay = selectTrainingDay;
 }
 
 function updateTrainingScheduleView() {
@@ -580,6 +663,7 @@ function updateTrainingScheduleView() {
     const dayClass = isToday ? 'today' : (isRestDay ? 'rest-day' : 'training-day');
     const dayIcon = isRestDay ? '💤' : '💪';
     
+    // FIXED: Use proper onclick with quotes
     calendarHTML += `
       <div class="calendar-day ${dayClass}" onclick="selectTrainingDay('${dateStr}')">
         <div class="day-number">${day}</div>
@@ -598,110 +682,84 @@ function updateTrainingScheduleView() {
   `;
   
   trainingCalendar.innerHTML = calendarHTML;
-  console.log('✅ Training calendar rendered');
+  console.log('✅ FIXED Training calendar rendered with clickable days');
 }
 
+// FIXED: Global function for day selection
 function selectTrainingDay(dateStr) {
   console.log('📅 Selected training day:', dateStr);
   
-  // Update current date
-  document.getElementById('current-date-picker').value = dateStr;
-  updateCurrentDate(dateStr);
-  
   const selectedWorkout = document.getElementById('selected-day-workout');
-  if (selectedWorkout) {
-    const date = new Date(dateStr);
-    const dayName = getDayOfWeekPolish(date);
-    const dayOfWeek = date.getDay();
-    
-    if (dayOfWeek === 5) { // Rest day
-      selectedWorkout.innerHTML = `
-        <h4>💤 ${dayName} - Dzień odpoczynku</h4>
-        <div class="rest-day-activities">
-          <div class="activity-item">🧘‍♀️ Mobilność i stretching</div>
-          <div class="activity-item">🎯 Praca nad przywodzicielami</div>
-          <div class="activity-item">💆‍♀️ Regeneracja</div>
-        </div>
-      `;
-    } else { // Training day
-      const currentPhase = getCurrentTrainingPhase();
-      if (currentPhase) {
-        const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * currentPhase.exercises.squat.intensity);
-        const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * currentPhase.exercises.bench.intensity);
-        const deadliftWeight = Math.round(appData.currentPRs.deadlift.estimated1RM * currentPhase.exercises.deadlift.intensity);
-        
-        selectedWorkout.innerHTML = `
-          <h4>💪 ${dayName} - ${currentPhase.name}</h4>
-          <div class="workout-preview">
-            <div class="exercise-preview">
-              <span class="exercise-name">Squat:</span>
-              <span class="exercise-details">${currentPhase.exercises.squat.sets}x${currentPhase.exercises.squat.reps} @ ${squatWeight}kg</span>
-            </div>
-            <div class="exercise-preview">
-              <span class="exercise-name">Bench:</span>
-              <span class="exercise-details">${currentPhase.exercises.bench.sets}x${currentPhase.exercises.bench.reps} @ ${benchWeight}kg</span>
-            </div>
-            <div class="exercise-preview">
-              <span class="exercise-name">Deadlift:</span>
-              <span class="exercise-details">${currentPhase.exercises.deadlift.sets}x${currentPhase.exercises.deadlift.reps} @ ${deadliftWeight}kg</span>
-            </div>
-            <div class="exercise-preview highlight">
-              <span class="exercise-name">🎯 ${currentPhase.accessories[0]}</span>
-            </div>
-            <button class="btn btn--primary" onclick="showSection('workout')">Pełny Trening</button>
-          </div>
-        `;
-      }
-    }
-  }
-}
-
-// Global function for calendar navigation
-window.changeCalendarMonth = function(direction) {
-  const currentDate = new Date(appData.currentDate);
-  currentDate.setMonth(currentDate.getMonth() + direction);
-  
-  const newDateStr = currentDate.toISOString().split('T')[0];
-  document.getElementById('current-date-picker').value = newDateStr;
-  updateCurrentDate(newDateStr);
-}
-
-// Global function for day selection
-window.selectTrainingDay = selectTrainingDay;
-
-// ==== DATE SYSTEM ====
-
-function initializeDateSystem() {
-  console.log('📅 Initializing date system...');
-  
-  const datePicker = document.getElementById('current-date-picker');
-  if (!datePicker) {
-    console.warn('⚠️ Date picker not found');
+  if (!selectedWorkout) {
+    console.warn('⚠️ Selected workout element not found');
     return;
   }
   
-  datePicker.value = appData.currentDate;
+  const date = new Date(dateStr);
+  const dayName = getDayOfWeekPolish(date);
+  const dayOfWeek = date.getDay();
   
-  datePicker.addEventListener('change', function(e) {
-    const newDate = e.target.value;
-    if (newDate) {
-      updateCurrentDate(newDate);
+  if (dayOfWeek === 5) { // Rest day
+    selectedWorkout.innerHTML = `
+      <h4>💤 ${dayName} - Dzień odpoczynku</h4>
+      <div class="rest-day-activities">
+        <div class="activity-item">🧘‍♀️ Mobilność i stretching</div>
+        <div class="activity-item">🎯 Praca nad przywodzicielami</div>
+        <div class="activity-item">💆‍♀️ Regeneracja</div>
+      </div>
+    `;
+  } else { // Training day
+    const currentPhase = getCurrentTrainingPhase();
+    if (currentPhase) {
+      const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * currentPhase.exercises.squat.intensity);
+      const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * currentPhase.exercises.bench.intensity);
+      const deadliftWeight = Math.round(appData.currentPRs.deadlift.estimated1RM * currentPhase.exercises.deadlift.intensity);
+      
+      selectedWorkout.innerHTML = `
+        <h4>💪 ${dayName} - ${currentPhase.name}</h4>
+        <div class="workout-preview">
+          <div class="exercise-preview">
+            <span class="exercise-name">Squat:</span>
+            <span class="exercise-details">${currentPhase.exercises.squat.sets}x${currentPhase.exercises.squat.reps} @ ${squatWeight}kg</span>
+          </div>
+          <div class="exercise-preview">
+            <span class="exercise-name">Bench:</span>
+            <span class="exercise-details">${currentPhase.exercises.bench.sets}x${currentPhase.exercises.bench.reps} @ ${benchWeight}kg</span>
+          </div>
+          <div class="exercise-preview">
+            <span class="exercise-name">Deadlift:</span>
+            <span class="exercise-details">${currentPhase.exercises.deadlift.sets}x${currentPhase.exercises.deadlift.reps} @ ${deadliftWeight}kg</span>
+          </div>
+          <div class="exercise-preview highlight">
+            <span class="exercise-name">🎯 ${currentPhase.accessories[0]}</span>
+          </div>
+          <button class="btn btn--primary" onclick="showSection('workout')">Pełny Trening</button>
+        </div>
+      `;
     }
-  });
+  }
   
-  console.log('📅 Date system initialized');
+  console.log('✅ Training day details updated');
 }
 
-function updateCurrentDate(newDate) {
-  const oldDate = appData.currentDate;
-  appData.currentDate = newDate;
+// FIXED: Global function for calendar navigation
+function changeCalendarMonth(direction) {
+  const currentDate = new Date(appData.currentDate);
+  currentDate.setMonth(currentDate.getMonth() + direction);
   
-  console.log(`📅 Date changed: ${oldDate} → ${newDate}`);
+  // Don't change actual app date, just calendar view
+  const newDateStr = currentDate.toISOString().split('T')[0];
   
-  saveDataToStorage(); // This will also sync to Firebase
-  trackChange(`Zmieniono datę na ${formatDatePolish(newDate)}`);
-  updateAllDateDependencies();
+  // Temporarily update for calendar rendering
+  const originalDate = appData.currentDate;
+  appData.currentDate = newDateStr;
+  updateTrainingScheduleView();
+  appData.currentDate = originalDate; // Restore original date
+  
+  console.log('📅 Calendar month changed:', direction > 0 ? 'next' : 'previous');
 }
+
+// ==== DATE DEPENDENCIES ====
 
 function updateAllDateDependencies() {
   try {
@@ -724,11 +782,6 @@ function updateDateDisplay() {
   const currentDate = new Date(appData.currentDate);
   const formattedDate = formatDatePolish(appData.currentDate);
   const dayOfWeek = getDayOfWeekPolish(currentDate);
-  
-  const dateInfo = document.getElementById('date-info');
-  if (dateInfo) {
-    dateInfo.textContent = `${dayOfWeek}, ${formattedDate}`;
-  }
   
   const currentDateDisplay = document.getElementById('current-date-display');
   if (currentDateDisplay) {
@@ -945,7 +998,7 @@ function updateDetailedWorkout(currentPhase, isTrainingDay, dayName) {
           <p>💡 <strong>Tip:</strong> Bazowane na metodologii Aitashii</p>
           <p>🎪 Dostosuj ciężary do swojego samopoczucia</p>
           <p>🌸 Pamiętaj o rozgrzewce i cool-down!</p>
-          <p>🔥 <strong>Firebase:</strong> Dane synchronizują się automatycznie!</p>
+          <p>🔥 <strong>Auto-sync:</strong> Dane synchronizują się automatycznie!</p>
         </div>
       </div>
     `;
@@ -1143,12 +1196,6 @@ function getMonthNamePolish(monthIndex) {
   return months[monthIndex];
 }
 
-window.setToday = function() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('current-date-picker').value = today;
-  updateCurrentDate(today);
-}
-
 // ==== SILENT AUTO-BACKUP ====
 
 function initializeAutoBackup() {
@@ -1182,7 +1229,6 @@ function trackChange(changeDescription = 'Dodano dane') {
   appData.autoBackup.changesCount++;
   console.log(`📊 Change tracked: ${changeDescription} (${appData.autoBackup.changesCount}/${appData.autoBackup.maxChanges})`);
   
-  // Silent save - this will also sync to Firebase if logged in
   saveDataToStorage();
   updateAutoBackupUI();
 }
@@ -1242,7 +1288,7 @@ function exportForTrainer() {
 
 function createBackupData() {
   return {
-    version: "2.0",
+    version: "2.1",
     appName: "Aitashii Powerlifting Tracker",
     backupType: "complete",
     timestamp: new Date().toISOString(),
@@ -1340,12 +1386,6 @@ function handleFileRestore(event) {
       
       appData = { ...backupData.appData };
       
-      const datePicker = document.getElementById('current-date-picker');
-      if (datePicker) {
-        datePicker.value = appData.currentDate;
-      }
-      
-      // Save to localStorage and Firebase if logged in
       saveDataToStorage();
       updateDashboard();
       updateAllDateDependencies();
@@ -1668,7 +1708,6 @@ function showSection(sectionName) {
     targetSection.classList.add('section--active');
   }
   
-  // Special handling for sections
   if (sectionName === 'progress' && charts.prChart) {
     setTimeout(() => {
       charts.prChart.resize();
@@ -1738,5 +1777,5 @@ window.addEventListener('load', function() {
   
   updateAutoBackupUI();
   
-  console.log('🎉 Aitashii Powerlifting Tracker with Firebase FULLY LOADED!');
+  console.log('🎉 Aitashii Powerlifting Tracker with AUTO-DATE & FIXED CALENDAR ready!');
 });
