@@ -738,8 +738,9 @@ select.form-control {
 }
 
 /* END PERPLEXITY DESIGN SYSTEM */
-/* 🌸🐱 AITASHII POWERLIFTING TRACKER - COMPLETE STYLES */
+/* 🌸🐱 AITASHII POWERLIFTING TRACKER - COMPLETE WITH SYNC STYLES */
 
+/* Base design system preserved from sync version */
 :root {
   /* Primitive Color Tokens */
   --color-white: rgba(255, 255, 255, 1);
@@ -861,17 +862,12 @@ select.form-control {
   --space-20: 20px;
   --space-24: 24px;
   --space-32: 32px;
-  --space-40: 40px;
-  --space-48: 48px;
-  --space-56: 56px;
-  --space-64: 64px;
 
   /* Border Radius */
   --radius-sm: 6px;
   --radius-base: 8px;
   --radius-md: 10px;
   --radius-lg: 12px;
-  --radius-xl: 16px;
   --radius-full: 9999px;
 
   /* Shadows */
@@ -879,13 +875,11 @@ select.form-control {
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.04), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
   --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.03);
 
   /* Animation */
   --duration-fast: 150ms;
   --duration-normal: 250ms;
-  --duration-slow: 350ms;
   --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
@@ -954,15 +948,15 @@ select.form-control {
   --color-gray-300-rgb: 167, 169, 169;
   --color-gray-200-rgb: 245, 245, 245;
 
-  /* Background color tokens (Dark Mode) */
-  --color-bg-1: rgba(29, 78, 216, 0.15);
-  --color-bg-2: rgba(180, 83, 9, 0.15);
-  --color-bg-3: rgba(21, 128, 61, 0.15);
-  --color-bg-4: rgba(185, 28, 28, 0.15);
-  --color-bg-5: rgba(107, 33, 168, 0.15);
-  --color-bg-6: rgba(194, 65, 12, 0.15);
-  --color-bg-7: rgba(190, 24, 93, 0.15);
-  --color-bg-8: rgba(8, 145, 178, 0.15);
+  /* Colorful background palette - Dark Mode */
+  --color-bg-1: rgba(29, 78, 216, 0.15); /* Dark blue */
+  --color-bg-2: rgba(180, 83, 9, 0.15); /* Dark yellow */
+  --color-bg-3: rgba(21, 128, 61, 0.15); /* Dark green */
+  --color-bg-4: rgba(185, 28, 28, 0.15); /* Dark red */
+  --color-bg-5: rgba(107, 33, 168, 0.15); /* Dark purple */
+  --color-bg-6: rgba(194, 65, 12, 0.15); /* Dark orange */
+  --color-bg-7: rgba(190, 24, 93, 0.15); /* Dark pink */
+  --color-bg-8: rgba(8, 145, 178, 0.15); /* Dark cyan */
   
   /* Semantic Color Tokens (Dark Mode) */
   --color-background: var(--color-charcoal-700);
@@ -982,7 +976,7 @@ select.form-control {
   --color-info: var(--color-gray-300);
   --color-focus-ring: rgba(var(--color-teal-300-rgb), 0.4);
   --color-btn-primary-text: var(--color-slate-900);
-  --color-card-border: rgba(var(--color-gray-400-rgb), 0.2);
+  --color-card-border: rgba(var(--color-gray-400-rgb), 0.15);
   --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
   --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.15);
   --color-select-caret: rgba(var(--color-gray-200-rgb), 0.8);
@@ -1020,7 +1014,6 @@ select.form-control {
   --color-warning: var(--color-orange-500);
   --color-info: var(--color-slate-500);
   --color-focus-ring: rgba(var(--color-teal-500-rgb), 0.4);
-  --color-select-caret: rgba(var(--color-slate-900-rgb), 0.8);
 
   /* RGB versions for light mode */
   --color-success-rgb: var(--color-teal-500-rgb);
@@ -1088,7 +1081,7 @@ a:hover {
   background-color: var(--color-background);
 }
 
-/* 🌸 Navigation */
+/* 🌸 Navigation with Auth */
 .nav {
   background-color: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
@@ -1154,6 +1147,14 @@ a:hover {
   box-shadow: var(--shadow-sm);
 }
 
+/* 🌸 Auth Section */
+.nav__auth {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
 .nav__backup .backup-indicator {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
@@ -1161,6 +1162,109 @@ a:hover {
   background-color: var(--color-bg-3);
   border-radius: var(--radius-base);
   border: 1px solid var(--color-border);
+}
+
+.auth-btn {
+  white-space: nowrap;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.user-avatar {
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-border);
+}
+
+/* 🌸 Sync Button - Enhanced */
+.sync-button {
+  position: fixed;
+  bottom: var(--space-24);
+  right: var(--space-24);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-teal-600));
+  color: var(--color-btn-primary-text);
+  border: none;
+  border-radius: var(--radius-full);
+  padding: var(--space-12) var(--space-16);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--duration-normal) var(--ease-standard);
+  z-index: 100;
+  font-size: var(--font-size-sm);
+  min-width: 80px;
+  text-align: center;
+}
+
+.sync-button:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-lg);
+}
+
+.sync-button--disabled {
+  background: var(--color-secondary);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+.sync-button--offline {
+  background: linear-gradient(135deg, var(--color-warning), var(--color-orange-400));
+  animation: pulse 2s infinite;
+}
+
+.sync-button--syncing {
+  background: linear-gradient(135deg, var(--color-info), var(--color-slate-500));
+  animation: spin 1s linear infinite;
+}
+
+.sync-button--pending {
+  background: linear-gradient(135deg, var(--color-error), var(--color-red-400));
+  animation: bounce 1s infinite;
+}
+
+.sync-button--synced {
+  background: linear-gradient(135deg, var(--color-success), var(--color-teal-300));
+}
+
+/* 🌸 Notification System */
+.notification {
+  position: fixed;
+  top: var(--space-24);
+  right: var(--space-24);
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--radius-base);
+  font-weight: var(--font-weight-medium);
+  box-shadow: var(--shadow-lg);
+  z-index: 1001;
+  transform: translateX(400px);
+  transition: transform var(--duration-normal) var(--ease-standard);
+}
+
+.notification--show {
+  transform: translateX(0);
+}
+
+.notification--success {
+  background: var(--color-success);
+  color: var(--color-btn-primary-text);
+}
+
+.notification--error {
+  background: var(--color-error);
+  color: var(--color-white);
+}
+
+.notification--warning {
+  background: var(--color-warning);
+  color: var(--color-white);
+}
+
+.notification--info {
+  background: var(--color-info);
+  color: var(--color-white);
 }
 
 /* 🌸 Main Content */
@@ -1363,27 +1467,27 @@ select.form-control {
 }
 
 .status--success {
-  background-color: rgba(var(--color-success-rgb), var(--status-bg-opacity));
+  background-color: rgba(var(--color-success-rgb), 0.15);
   color: var(--color-success);
-  border: 1px solid rgba(var(--color-success-rgb), var(--status-border-opacity));
+  border: 1px solid rgba(var(--color-success-rgb), 0.25);
 }
 
 .status--error {
-  background-color: rgba(var(--color-error-rgb), var(--status-bg-opacity));
+  background-color: rgba(var(--color-error-rgb), 0.15);
   color: var(--color-error);
-  border: 1px solid rgba(var(--color-error-rgb), var(--status-border-opacity));
+  border: 1px solid rgba(var(--color-error-rgb), 0.25);
 }
 
 .status--warning {
-  background-color: rgba(var(--color-warning-rgb), var(--status-bg-opacity));
+  background-color: rgba(var(--color-warning-rgb), 0.15);
   color: var(--color-warning);
-  border: 1px solid rgba(var(--color-warning-rgb), var(--status-border-opacity));
+  border: 1px solid rgba(var(--color-warning-rgb), 0.25);
 }
 
 .status--info {
-  background-color: rgba(var(--color-info-rgb), var(--status-bg-opacity));
+  background-color: rgba(var(--color-info-rgb), 0.15);
   color: var(--color-info);
-  border: 1px solid rgba(var(--color-info-rgb), var(--status-border-opacity));
+  border: 1px solid rgba(var(--color-info-rgb), 0.25);
 }
 
 /* 🌸 Date Control Card */
@@ -1509,7 +1613,7 @@ select.form-control {
   color: var(--color-text-secondary);
 }
 
-/* 🌸 PR Categories by Reps */
+/* 🌸 NEW: PR Categories by Reps - Complete with Tabs */
 .pr-categories {
   margin-bottom: var(--space-32);
 }
@@ -1630,7 +1734,7 @@ select.form-control {
   height: 100%;
   background: linear-gradient(90deg, var(--color-primary), var(--color-teal-400));
   border-radius: var(--radius-full);
-  transition: width var(--duration-slow) var(--ease-standard);
+  transition: width var(--duration-normal) var(--ease-standard);
   position: relative;
 }
 
@@ -1664,7 +1768,7 @@ select.form-control {
   display: block;
 }
 
-/* 🌸 Training Calendar */
+/* 🌸 NEW: Interactive Training Calendar */
 .training-calendar-header {
   display: flex;
   justify-content: space-between;
@@ -2060,7 +2164,7 @@ select.form-control {
 .workout-exercises {
   display: flex;
   flex-direction: column;
-  gap: var(--space-40);
+  gap: var(--space-32);
 }
 
 .exercise-group h3 {
@@ -2190,7 +2294,7 @@ select.form-control {
   outline: none;
 }
 
-/* 🌸 Rest Timer Modal */
+/* 🌸 NEW: Rest Timer Modal */
 .rest-timer-modal {
   position: fixed;
   top: 0;
@@ -2210,7 +2314,7 @@ select.form-control {
   border-radius: var(--radius-lg);
   padding: var(--space-32);
   text-align: center;
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-lg);
   border: 2px solid var(--color-primary);
   max-width: 300px;
   width: 90%;
@@ -2293,7 +2397,7 @@ select.form-control {
   margin-bottom: var(--space-32);
 }
 
-/* 🌸 Measurements */
+/* 🌸 NEW: Enhanced Measurements with History Table */
 .measurements-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -2441,7 +2545,7 @@ select.form-control {
   letter-spacing: 0.05em;
 }
 
-/* 🌸 Nutrition Section */
+/* 🌸 NEW: Complete Nutrition Section */
 .nutrition-entry {
   margin-bottom: var(--space-24);
 }
@@ -2633,7 +2737,7 @@ select.form-control {
   font-style: italic;
 }
 
-/* 🌸 Progress Section */
+/* 🌸 NEW: Complete Progress Section with 4 Phases */
 .progress-overview {
   margin-bottom: var(--space-32);
 }
@@ -2839,6 +2943,17 @@ select.form-control {
   100% { transform: translateX(100%); }
 }
 
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-3px); }
+  60% { transform: translateY(-2px); }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -2851,7 +2966,7 @@ select.form-control {
 }
 
 .fade-in {
-  animation: fadeIn var(--duration-slow) var(--ease-standard);
+  animation: fadeIn var(--duration-normal) var(--ease-standard);
 }
 
 /* 🌸 Responsive Design */
@@ -2877,6 +2992,13 @@ select.form-control {
     flex: 1;
     text-align: center;
     min-width: 100px;
+  }
+
+  .nav__auth {
+    flex-direction: column;
+    gap: var(--space-8);
+    width: 100%;
+    align-items: center;
   }
 
   .summary-grid {
@@ -2935,6 +3057,13 @@ select.form-control {
     font-size: var(--font-size-xs);
   }
 
+  .sync-button {
+    bottom: var(--space-16);
+    right: var(--space-16);
+    padding: var(--space-10) var(--space-12);
+    font-size: var(--font-size-sm);
+  }
+
   #timer-display {
     font-size: var(--font-size-xl);
   }
@@ -2975,6 +3104,7 @@ select.form-control {
   }
 }
 
+/* 🌸 Mobile Portrait - 480px breakpoint */
 @media (max-width: 480px) {
   .nav__menu {
     flex-direction: column;
@@ -3082,7 +3212,7 @@ select.form-control {
 
 /* 🌸 Print styles */
 @media print {
-  .nav, .rest-timer-modal {
+  .nav, .sync-button, .rest-timer-modal, .notification {
     display: none !important;
   }
   
@@ -3108,6 +3238,5 @@ select.form-control {
 
 @font-face {
   font-family: 'FKGroteskNeue';
-  src: url('https://r2cdn.perplexity.ai/fonts/FKGroteskNeue.woff2')
-    format('woff2');
+  src: url('https://r2cdn.perplexity.ai/fonts/FKGroteskNeue.woff2') format('woff2');
 }
