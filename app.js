@@ -1,7 +1,7 @@
-// 🌸🐱 Aitashii Powerlifting Tracker - FIXED APPLICATION DATA & FUNCTIONALITY
+// 🌸🐱 Aitashii Powerlifting Tracker - COMPLETE APPLICATION
 
 let appData = {
-  // NEW: Current Date System - controls all date-dependent functionality
+  // Current Date System - controls all date-dependent functionality
   currentDate: "2025-08-25", // Default starting date
   
   // Auto-backup settings (updated to 3 changes)
@@ -11,10 +11,29 @@ let appData = {
     autoDownload: true
   },
   
+  // Current PRs with rep categories
   currentPRs: {
-    squat: { weight: 40, reps: 5, date: "2025-08-23", estimated1RM: 45 },
-    bench: { weight: 45, reps: 1, date: "2025-08-23", estimated1RM: 45 },
-    deadlift: { weight: 90, reps: 1, date: "2025-07-31", estimated1RM: 90 }
+    squat: {
+      "1RM": { weight: 45, reps: 1, date: "2025-08-23", estimated1RM: 45 },
+      "2RM": null,
+      "3RM": null,
+      "4RM": null,
+      "5RM": { weight: 40, reps: 5, date: "2025-08-23", estimated1RM: 45 }
+    },
+    bench: {
+      "1RM": { weight: 45, reps: 1, date: "2025-08-23", estimated1RM: 45 },
+      "2RM": null,
+      "3RM": null,
+      "4RM": null,
+      "5RM": null
+    },
+    deadlift: {
+      "1RM": { weight: 90, reps: 1, date: "2025-07-31", estimated1RM: 90 },
+      "2RM": null,
+      "3RM": null,
+      "4RM": null,
+      "5RM": null
+    }
   },
   
   // Enhanced measurements with fat mass and body water
@@ -60,7 +79,8 @@ let appData = {
   
   prHistory: {
     squat: [
-      { date: "2025-08-23", weight: 40, reps: 5, estimated1RM: 45 }
+      { date: "2025-08-23", weight: 40, reps: 5, estimated1RM: 45 },
+      { date: "2025-08-23", weight: 45, reps: 1, estimated1RM: 45 }
     ],
     bench: [
       { date: "2025-08-06", weight: 42.5, reps: 1, estimated1RM: 42.5 },
@@ -70,6 +90,18 @@ let appData = {
       { date: "2025-07-31", weight: 90, reps: 1, estimated1RM: 90 }
     ]
   },
+  
+  // Nutrition data
+  nutritionEntries: [
+    {
+      date: "2025-08-25",
+      calories: 2350,
+      protein: 175,
+      carbs: 265,
+      fat: 82,
+      notes: "Good day"
+    }
+  ],
   
   // Complete 4-phase training plan with exact dates
   trainingPhases: {
@@ -137,9 +169,8 @@ let isRestTimerRunning = false;
 // Chart instances
 let charts = {};
 
-// Firebase Auth State
-let currentUser = null;
-let isSignedIn = false;
+// Current week for training calendar
+let currentWeekOffset = 0;
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
@@ -150,9 +181,10 @@ document.addEventListener('DOMContentLoaded', function() {
   initializePRForm();
   initializeMeasurementsForm();
   initializeCycleTracker();
+  initializeNutritionForm();
+  initializeTrainingCalendar();
   setupFatMassCalculation();
   initializeDateControl();
-  initializeAuth();
   
   // Wait for charts to initialize after DOM is ready
   setTimeout(() => {
@@ -166,109 +198,585 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('✅ App fully initialized');
 });
 
-// NEW: Firebase Authentication
-function initializeAuth() {
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
-  const userInfo = document.getElementById('user-info');
-  const userAvatar = document.getElementById('user-avatar');
+// Training Calendar Functions
+function initializeTrainingCalendar() {
+  const prevWeekBtn = document.getElementById('prev-week');
+  const nextWeekBtn = document.getElementById('next-week');
   
-  if (!window.firebaseAuth) {
-    console.warn('Firebase not available - offline mode');
+  if (prevWeekBtn) {
+    prevWeekBtn.addEventListener('click', () => {
+      currentWeekOffset--;
+      generateTrainingCalendar();
+    });
+  }
+  
+  if (nextWeekBtn) {
+    nextWeekBtn.addEventListener('click', () => {
+      currentWeekOffset++;
+      generateTrainingCalendar();
+    });
+  }
+  
+  generateTrainingCalendar();
+}
+
+function generateTrainingCalendar() {
+  const calendar = document.getElementById('training-calendar');
+  const weekDisplay = document.getElementById('current-week-display');
+  
+  if (!calendar || !weekDisplay) return;
+  
+  // Calculate current week dates
+  const startDate = new Date(appData.currentDate + 'T00:00:00');
+  const monday = new Date(startDate);
+  const dayOfWeek = startDate.getDay();
+  const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Handle Sunday as 0
+  monday.setDate(startDate.getDate() - daysFromMonday + (currentWeekOffset * 7));
+  
+  // Update week display
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  weekDisplay.textContent = `Week ${currentWeekOffset + 1} (${formatDateShort(monday)} - ${formatDateShort(sunday)})`;
+  
+  // Generate calendar HTML
+  calendar.innerHTML = '';
+  
+  const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+  
+  for (let i = 0; i < 7; i++) {
+    const dayDate = new Date(monday);
+    dayDate.setDate(monday.getDate() + i);
+    
+    const dayElement = document.createElement('div');
+    dayElement.className = 'training-day';
+    
+    const dayName = days[i];
+    const dayNumber = dayDate.getDate();
+    
+    // Determine workout type
+    let workoutType = 'SBD TRAINING';
+    let workoutClass = 'training';
+    
+    if (i === 4) { // Friday
+      workoutType = 'REST';
+      workoutClass = 'rest';
+    }
+    
+    // Check if it's current date
+    const isToday = dayDate.toDateString() === new Date(appData.currentDate + 'T00:00:00').toDateString();
+    
+    dayElement.innerHTML = `
+      <div class="day-header">
+        <div class="day-name">${dayName}</div>
+        <div class="day-number">${dayNumber}</div>
+      </div>
+      <div class="workout-type ${workoutClass}">${workoutType}</div>
+    `;
+    
+    if (isToday) {
+      dayElement.classList.add('today');
+    }
+    
+    // Add click handler for interactive workout details
+    dayElement.addEventListener('click', () => {
+      showWorkoutDetails(dayDate, dayName, workoutType);
+    });
+    
+    calendar.appendChild(dayElement);
+  }
+}
+
+function showWorkoutDetails(date, dayName, workoutType) {
+  const detailsSection = document.getElementById('selected-workout-details');
+  const titleElement = document.getElementById('selected-date-title');
+  const contentElement = document.getElementById('workout-details-content');
+  
+  if (!detailsSection || !titleElement || !contentElement) return;
+  
+  const formattedDate = formatDateFull(date);
+  titleElement.textContent = `${dayName}, ${formattedDate}`;
+  
+  detailsSection.style.display = 'block';
+  
+  if (workoutType === 'REST') {
+    contentElement.innerHTML = `
+      <div class="rest-day-content">
+        <h4>🧘‍♀️ Rest & Recovery Day</h4>
+        <div class="recovery-activities">
+          <div class="activity-item">
+            <strong>Mobility Work:</strong> 20-30 minutes of stretching and foam rolling
+          </div>
+          <div class="activity-item">
+            <strong>Light Walking:</strong> 20-30 minutes easy pace
+          </div>
+          <div class="activity-item">
+            <strong>Sleep:</strong> Aim for 8+ hours of quality sleep
+          </div>
+          <div class="activity-item">
+            <strong>Nutrition:</strong> Focus on recovery nutrition and hydration
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    // Generate SBD workout based on current training phase
+    const currentPhase = calculateCurrentPhase();
+    let intensity = 0.67; // Default for hypertrophy phase
+    
+    if (currentPhase.key === 'phase1') intensity = 0.67;
+    else if (currentPhase.key === 'phase2') intensity = 0.8;
+    else if (currentPhase.key === 'phase3') intensity = 0.9;
+    else if (currentPhase.key === 'phase4') intensity = 0.85;
+    
+    const squatWeight = Math.round(getBest1RM('squat') * intensity / 2.5) * 2.5;
+    const benchWeight = Math.round(getBest1RM('bench') * intensity / 2.5) * 2.5;
+    const deadliftWeight = Math.round(getBest1RM('deadlift') * intensity / 2.5) * 2.5;
+    
+    contentElement.innerHTML = `
+      <div class="workout-details">
+        <div class="phase-info">
+          <span class="status status--success">${currentPhase.phase.name}</span>
+          <span>Intensity: ${Math.round(intensity * 100)}% 1RM</span>
+        </div>
+        
+        <h4>Main Movements - 6xSBD</h4>
+        <div class="exercise-preview">
+          <div class="exercise-line">
+            <strong>Squat:</strong> 5x5 @ ${squatWeight}kg (${Math.round(intensity * 100)}%)
+          </div>
+          <div class="exercise-line">
+            <strong>Bench Press:</strong> 4x6 @ ${benchWeight}kg (${Math.round(intensity * 100)}%)
+          </div>
+          <div class="exercise-line">
+            <strong>Deadlift:</strong> 4x5 @ ${deadliftWeight}kg (${Math.round(intensity * 100)}%)
+          </div>
+        </div>
+        
+        <h4>Accessories</h4>
+        <div class="accessories-preview">
+          <div class="accessory-line">
+            <strong>Adductor Work (PRIORITY):</strong> Cossack Squats 3x12-15, Lateral Lunges 3x10/leg, Copenhagen Planks 3x30s
+          </div>
+          <div class="accessory-line">
+            <strong>Hip Thrusts:</strong> 3x10 @ 40kg
+          </div>
+          <div class="accessory-line">
+            <strong>Core Work:</strong> 3 sets of choice
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Scroll to details section
+  detailsSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Enhanced PR Management with Rep Categories
+function initializePRForm() {
+  const form = document.getElementById('pr-form');
+  if (!form) return;
+
+  const weightInput = document.getElementById('pr-weight');
+  const repsInput = document.getElementById('pr-reps');
+  const estimatedDisplay = document.getElementById('estimated-1rm-display');
+  const dateInput = document.getElementById('pr-date');
+
+  // Set current app date (not system date)
+  if (dateInput) {
+    dateInput.value = appData.currentDate;
+  }
+
+  // Calculate estimated 1RM on input change
+  if (weightInput && repsInput && estimatedDisplay) {
+    [weightInput, repsInput].forEach(input => {
+      input.addEventListener('input', () => {
+        const weight = parseFloat(weightInput.value);
+        const reps = parseInt(repsInput.value);
+        
+        if (weight && reps) {
+          const estimated1RM = calculate1RM(weight, reps);
+          estimatedDisplay.textContent = `${estimated1RM}kg`;
+        } else {
+          estimatedDisplay.textContent = '-';
+        }
+      });
+    });
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    addNewPR();
+  });
+
+  // Initialize PR categories tabs
+  initializePRTabs();
+  updatePRCategories('squat'); // Default to squat
+}
+
+function initializePRTabs() {
+  const tabs = document.querySelectorAll('.pr-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      // Update active tab
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      
+      // Update displayed categories
+      const exercise = tab.dataset.exercise;
+      updatePRCategories(exercise);
+    });
+  });
+}
+
+function updatePRCategories(exercise) {
+  const container = document.getElementById('pr-rep-categories');
+  if (!container) return;
+  
+  const categories = appData.currentPRs[exercise];
+  
+  container.innerHTML = '';
+  
+  ['1RM', '2RM', '3RM', '4RM', '5RM'].forEach(repCategory => {
+    const categoryDiv = document.createElement('div');
+    categoryDiv.className = 'pr-category';
+    
+    const pr = categories[repCategory];
+    
+    if (pr) {
+      categoryDiv.innerHTML = `
+        <div class="pr-category-header">
+          <h4>${repCategory}</h4>
+          <span class="status status--success">Set</span>
+        </div>
+        <div class="pr-category-details">
+          <div class="pr-weight">${pr.weight}kg x ${pr.reps}</div>
+          <div class="pr-date">${formatDate(pr.date)}</div>
+          <div class="pr-1rm">Est. 1RM: ${pr.estimated1RM}kg</div>
+        </div>
+      `;
+    } else {
+      categoryDiv.innerHTML = `
+        <div class="pr-category-header">
+          <h4>${repCategory}</h4>
+          <span class="status status--info">Not Set</span>
+        </div>
+        <div class="pr-category-details">
+          <div class="pr-empty">No record yet</div>
+        </div>
+      `;
+    }
+    
+    container.appendChild(categoryDiv);
+  });
+}
+
+function getBest1RM(exercise) {
+  const categories = appData.currentPRs[exercise];
+  let best1RM = 0;
+  
+  Object.values(categories).forEach(pr => {
+    if (pr && pr.estimated1RM > best1RM) {
+      best1RM = pr.estimated1RM;
+    }
+  });
+  
+  return best1RM || 45; // Default minimum
+}
+
+function calculate1RM(weight, reps) {
+  if (reps === 1) return weight;
+  // Brzycki formula
+  return Math.round((weight * 36) / (37 - reps) * 2) / 2; // Round to nearest 0.5kg
+}
+
+function addNewPR() {
+  const exercise = document.getElementById('pr-exercise').value;
+  const weight = parseFloat(document.getElementById('pr-weight').value);
+  const reps = parseInt(document.getElementById('pr-reps').value);
+  const date = document.getElementById('pr-date').value;
+
+  const estimated1RM = calculate1RM(weight, reps);
+  const repCategory = `${reps}RM`;
+
+  // Update current PRs in rep category
+  appData.currentPRs[exercise][repCategory] = {
+    weight: weight,
+    reps: reps,
+    date: date,
+    estimated1RM: estimated1RM
+  };
+
+  // Add to history
+  if (!appData.prHistory[exercise]) {
+    appData.prHistory[exercise] = [];
+  }
+  appData.prHistory[exercise].push({
+    date: date,
+    weight: weight,
+    reps: reps,
+    estimated1RM: estimated1RM
+  });
+
+  // Sort history by date
+  appData.prHistory[exercise].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Increment backup counter
+  incrementBackupCounter();
+
+  // Update dashboard and charts
+  updateDashboard();
+  updatePRChart();
+  updatePRCategories(exercise);
+  
+  // Reset form
+  document.getElementById('pr-form').reset();
+  document.getElementById('pr-date').value = appData.currentDate;
+  document.getElementById('estimated-1rm-display').textContent = '-';
+
+  alert(`🌸 New ${repCategory} PR added! ${exercise.toUpperCase()}: ${weight}kg x${reps} (Est. 1RM: ${estimated1RM}kg)\n\nAll training weights have been updated.`);
+}
+
+// Enhanced Measurements with proper saving and history
+function setupFatMassCalculation() {
+  const weightInput = document.getElementById('measurement-weight');
+  const bodyFatInput = document.getElementById('measurement-bodyfat');
+  const fatMassInput = document.getElementById('measurement-fatmass');
+
+  if (!weightInput || !bodyFatInput || !fatMassInput) return;
+
+  function calculateFatMass() {
+    const weight = parseFloat(weightInput.value);
+    const bodyFat = parseFloat(bodyFatInput.value);
+    
+    if (weight && bodyFat) {
+      const fatMass = Math.round((weight * bodyFat / 100) * 10) / 10;
+      fatMassInput.value = fatMass;
+    } else {
+      fatMassInput.value = '';
+    }
+  }
+
+  weightInput.addEventListener('input', calculateFatMass);
+  bodyFatInput.addEventListener('input', calculateFatMass);
+}
+
+function initializeMeasurementsForm() {
+  const form = document.getElementById('measurements-form');
+  if (!form) return;
+  
+  // Set current app date
+  const dateInput = document.getElementById('measurement-date');
+  if (dateInput) {
+    dateInput.value = appData.currentDate;
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    addMeasurement();
+  });
+  
+  // Update measurements history display
+  updateMeasurementsHistory();
+}
+
+function addMeasurement() {
+  const date = document.getElementById('measurement-date').value;
+  const weight = parseFloat(document.getElementById('measurement-weight').value);
+  const bodyFat = parseFloat(document.getElementById('measurement-bodyfat').value);
+  const muscle = parseFloat(document.getElementById('measurement-muscle').value);
+  const fatMass = parseFloat(document.getElementById('measurement-fatmass').value);
+  const bodyWater = parseFloat(document.getElementById('measurement-bodywater').value);
+
+  const measurement = { 
+    date, 
+    weight, 
+    bodyFat, 
+    muscle, 
+    fatMass: fatMass || (weight * bodyFat / 100),
+    bodyWater 
+  };
+  
+  appData.measurements.push(measurement);
+  
+  // Sort by date
+  appData.measurements.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Update current stats in bodyGoals
+  appData.bodyGoals.current = {
+    weight: weight,
+    bodyFat: bodyFat,
+    fatMass: fatMass || (weight * bodyFat / 100),
+    muscleMass: muscle,
+    bodyWater: bodyWater
+  };
+
+  // Increment backup counter
+  incrementBackupCounter();
+
+  // Update charts, dashboard, and history
+  updateWeightChart();
+  updateBodyFatChart();
+  updateBodyCompositionDisplay();
+  updateMeasurementsHistory();
+  updateDashboard();
+
+  // Reset form
+  document.getElementById('measurements-form').reset();
+  document.getElementById('measurement-date').value = appData.currentDate;
+
+  alert('🌸 Measurements saved and body composition updated!');
+}
+
+function updateMeasurementsHistory() {
+  const historyTable = document.getElementById('measurements-history-table');
+  if (!historyTable) return;
+  
+  historyTable.innerHTML = '';
+  
+  // Show latest 10 measurements
+  const recentMeasurements = appData.measurements.slice(-10).reverse();
+  
+  recentMeasurements.forEach(measurement => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${formatDate(measurement.date)}</td>
+      <td>${measurement.weight}kg</td>
+      <td>${measurement.bodyFat}%</td>
+      <td>${measurement.muscle}kg</td>
+      <td>${measurement.fatMass}kg</td>
+      <td>${measurement.bodyWater}kg</td>
+    `;
+    historyTable.appendChild(row);
+  });
+}
+
+// Nutrition Form Functions
+function initializeNutritionForm() {
+  const form = document.getElementById('nutrition-form');
+  const shakeBtn = document.getElementById('add-shake-btn');
+  
+  if (form) {
+    // Set current app date
+    const dateInput = document.getElementById('nutrition-date');
+    if (dateInput) {
+      dateInput.value = appData.currentDate;
+    }
+    
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      addNutritionEntry();
+    });
+  }
+  
+  if (shakeBtn) {
+    shakeBtn.addEventListener('click', addShakeToLog);
+  }
+  
+  updateNutritionHistory();
+}
+
+function addNutritionEntry() {
+  const date = document.getElementById('nutrition-date').value;
+  const calories = parseInt(document.getElementById('nutrition-calories-input').value);
+  const protein = parseFloat(document.getElementById('nutrition-protein-input').value);
+  const carbs = parseFloat(document.getElementById('nutrition-carbs-input').value);
+  const fat = parseFloat(document.getElementById('nutrition-fat-input').value);
+  const notes = document.getElementById('nutrition-notes').value;
+
+  const entry = {
+    date,
+    calories,
+    protein,
+    carbs,
+    fat,
+    notes
+  };
+  
+  appData.nutritionEntries.push(entry);
+  
+  // Sort by date
+  appData.nutritionEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Increment backup counter
+  incrementBackupCounter();
+
+  // Update display
+  updateNutritionHistory();
+
+  // Reset form
+  document.getElementById('nutrition-form').reset();
+  document.getElementById('nutrition-date').value = appData.currentDate;
+
+  alert('🌸 Nutrition entry added!');
+}
+
+function addShakeToLog() {
+  const today = appData.currentDate;
+  
+  // Check if there's already an entry for today
+  const existingEntry = appData.nutritionEntries.find(entry => entry.date === today);
+  
+  if (existingEntry) {
+    // Add shake to existing entry
+    existingEntry.calories += 278;
+    existingEntry.protein += 53.5;
+    existingEntry.carbs += 10.8;
+    existingEntry.fat += 6;
+    existingEntry.notes = existingEntry.notes ? existingEntry.notes + ', Added shake' : 'Added shake';
+  } else {
+    // Create new entry with shake
+    appData.nutritionEntries.push({
+      date: today,
+      calories: 278,
+      protein: 53.5,
+      carbs: 10.8,
+      fat: 6,
+      notes: 'Shake only'
+    });
+  }
+  
+  // Sort by date
+  appData.nutritionEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  // Increment backup counter
+  incrementBackupCounter();
+
+  // Update display
+  updateNutritionHistory();
+
+  alert('🌸 Shake added to today\'s nutrition log!\n\n278 kcal, 53.5g protein counted.');
+}
+
+function updateNutritionHistory() {
+  const historyList = document.getElementById('nutrition-history-list');
+  if (!historyList) return;
+  
+  historyList.innerHTML = '';
+  
+  // Show latest 7 entries
+  const recentEntries = appData.nutritionEntries.slice(-7).reverse();
+  
+  if (recentEntries.length === 0) {
+    historyList.innerHTML = '<div class="no-entries">No nutrition entries yet. Add your first entry above!</div>';
     return;
   }
-
-  // GitHub sign in
-  loginBtn?.addEventListener('click', async () => {
-    try {
-      const provider = new window.firebaseGithubAuthProvider();
-      const result = await window.firebaseSignInWithPopup(provider);
-      console.log('🔥 Signed in:', result.user);
-    } catch (error) {
-      console.error('Sign in failed:', error);
-      alert('Sign in failed: ' + error.message);
-    }
-  });
-
-  // Sign out
-  logoutBtn?.addEventListener('click', async () => {
-    try {
-      await window.firebaseSignOut();
-      console.log('🔥 Signed out');
-    } catch (error) {
-      console.error('Sign out failed:', error);
-    }
-  });
-
-  // Auth state listener
-  window.firebaseOnAuthStateChanged((user) => {
-    currentUser = user;
-    isSignedIn = !!user;
-    
-    if (user) {
-      loginBtn.style.display = 'none';
-      userInfo.style.display = 'flex';
-      userAvatar.src = user.photoURL || 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
-      userAvatar.alt = user.displayName || 'User';
-      console.log('🔥 User authenticated:', user.displayName);
-      
-      // Load user data
-      loadUserData();
-    } else {
-      loginBtn.style.display = 'block';
-      userInfo.style.display = 'none';
-      console.log('🔥 User signed out');
-    }
-  });
-}
-
-// Load user data from Firebase
-async function loadUserData() {
-  if (!isSignedIn || !window.firebaseDb) return;
   
-  try {
-    const docRef = window.firebaseDb.collection('users').doc(currentUser.uid);
-    const doc = await docRef.get();
-    
-    if (doc.exists) {
-      const userData = doc.data();
-      if (userData.appData) {
-        appData = { ...appData, ...userData.appData };
-        updateAllDateDependencies();
-        updateDashboard();
-        console.log('🔥 User data loaded from cloud');
-      }
-    }
-  } catch (error) {
-    console.error('Failed to load user data:', error);
-  }
-}
-
-// Save user data to Firebase
-async function saveUserData() {
-  if (!isSignedIn || !window.firebaseDb) return;
-  
-  try {
-    const docRef = window.firebaseDb.collection('users').doc(currentUser.uid);
-    await docRef.set({
-      appData: appData,
-      lastUpdated: window.firebaseServerTimestamp()
-    }, { merge: true });
-    
-    console.log('🔥 User data saved to cloud');
-  } catch (error) {
-    console.error('Failed to save user data:', error);
-  }
-}
-
-// Manual sync function
-function manualSync() {
-  if (isSignedIn) {
-    saveUserData();
-    alert('💾 Data synced to cloud!');
-  } else {
-    alert('🔐 Sign in to sync data to cloud');
-  }
+  recentEntries.forEach(entry => {
+    const entryDiv = document.createElement('div');
+    entryDiv.className = 'nutrition-entry-item';
+    entryDiv.innerHTML = `
+      <div class="entry-header">
+        <strong>${formatDate(entry.date)}</strong>
+        <span class="entry-calories">${entry.calories} kcal</span>
+      </div>
+      <div class="entry-macros">
+        Protein: ${entry.protein}g | Carbs: ${entry.carbs}g | Fat: ${entry.fat}g
+      </div>
+      ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
+    `;
+    historyList.appendChild(entryDiv);
+  });
 }
 
 // Rest Timer Functions
@@ -321,7 +829,7 @@ function updateRestTimerDisplay() {
   display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
-// NEW: Dynamic Date System Functions
+// Date Control Functions
 function initializeDateControl() {
   const datePicker = document.getElementById('date-picker');
   const updateBtn = document.getElementById('update-date-btn');
@@ -368,11 +876,6 @@ function updateCurrentDate(newDateString) {
   
   // Update all displays immediately
   updateCurrentDateDisplay();
-  
-  // Save to cloud if signed in
-  if (isSignedIn) {
-    saveUserData();
-  }
 }
 
 function updateAllDateDependencies() {
@@ -387,6 +890,7 @@ function updateAllDateDependencies() {
   updateCompetitionCountdown();
   updateNutritionForDay();
   updateWeeklyProgressDisplay();
+  generateTrainingCalendar(); // Update training calendar
 }
 
 function updateCurrentDateDisplay() {
@@ -541,10 +1045,6 @@ function updateDailyWorkout() {
   const currentDate = new Date(appData.currentDate + 'T00:00:00');
   const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
   const currentPhase = calculateCurrentPhase();
-  
-  // Map day of week to English names
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const dayName = dayNames[dayOfWeek];
   
   // Check if it's a training day (Monday-Thursday + Saturday-Sunday)
   const isTrainingDay = dayOfWeek >= 1 && dayOfWeek <= 4 || dayOfWeek === 6 || dayOfWeek === 0;
@@ -789,7 +1289,7 @@ function updateWeeklyProgressDisplay() {
   });
 }
 
-// NEW: Auto-backup system with 3 changes
+// Auto-backup system
 function incrementBackupCounter() {
   appData.autoBackup.changesCount++;
   updateAutoBackupDisplay();
@@ -833,15 +1333,10 @@ function triggerAutoBackup() {
   appData.autoBackup.changesCount = 0;
   updateAutoBackupDisplay();
   
-  // Also save to cloud if signed in
-  if (isSignedIn) {
-    saveUserData();
-  }
-  
   console.log('🌸 Auto-backup triggered and downloaded');
 }
 
-// Fixed Navigation
+// Navigation Functions
 function initializeNavigation() {
   console.log('Initializing navigation...');
   
@@ -925,192 +1420,6 @@ function updateTimerDisplay() {
   timerDisplay.textContent = display;
 }
 
-// PR Management
-function initializePRForm() {
-  const form = document.getElementById('pr-form');
-  if (!form) return;
-
-  const weightInput = document.getElementById('pr-weight');
-  const repsInput = document.getElementById('pr-reps');
-  const estimatedDisplay = document.getElementById('estimated-1rm-display');
-  const dateInput = document.getElementById('pr-date');
-
-  // Set current app date (not system date)
-  if (dateInput) {
-    dateInput.value = appData.currentDate;
-  }
-
-  // Calculate estimated 1RM on input change
-  if (weightInput && repsInput && estimatedDisplay) {
-    [weightInput, repsInput].forEach(input => {
-      input.addEventListener('input', () => {
-        const weight = parseFloat(weightInput.value);
-        const reps = parseInt(repsInput.value);
-        
-        if (weight && reps) {
-          const estimated1RM = calculate1RM(weight, reps);
-          estimatedDisplay.textContent = `${estimated1RM}kg`;
-        } else {
-          estimatedDisplay.textContent = '-';
-        }
-      });
-    });
-  }
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    addNewPR();
-  });
-}
-
-function calculate1RM(weight, reps) {
-  if (reps === 1) return weight;
-  // Brzycki formula
-  return Math.round((weight * 36) / (37 - reps) * 2) / 2; // Round to nearest 0.5kg
-}
-
-function addNewPR() {
-  const exercise = document.getElementById('pr-exercise').value;
-  const weight = parseFloat(document.getElementById('pr-weight').value);
-  const reps = parseInt(document.getElementById('pr-reps').value);
-  const date = document.getElementById('pr-date').value;
-
-  const estimated1RM = calculate1RM(weight, reps);
-
-  // Update current PRs
-  appData.currentPRs[exercise] = {
-    weight: weight,
-    reps: reps,
-    date: date,
-    estimated1RM: estimated1RM
-  };
-
-  // Add to history
-  if (!appData.prHistory[exercise]) {
-    appData.prHistory[exercise] = [];
-  }
-  appData.prHistory[exercise].push({
-    date: date,
-    weight: weight,
-    reps: reps,
-    estimated1RM: estimated1RM
-  });
-
-  // Sort history by date
-  appData.prHistory[exercise].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  // Increment backup counter
-  incrementBackupCounter();
-
-  // Update dashboard and charts
-  updateDashboard();
-  updatePRChart();
-  
-  // Reset form
-  document.getElementById('pr-form').reset();
-  document.getElementById('pr-date').value = appData.currentDate;
-  document.getElementById('estimated-1rm-display').textContent = '-';
-
-  alert(`🌸 New PR added! ${exercise.toUpperCase()}: ${weight}kg x${reps} (Est. 1RM: ${estimated1RM}kg)\n\nAll training weights have been updated.`);
-  
-  // Save to cloud if signed in
-  if (isSignedIn) {
-    saveUserData();
-  }
-}
-
-// Enhanced Measurements with Fat Mass Calculation
-function setupFatMassCalculation() {
-  const weightInput = document.getElementById('measurement-weight');
-  const bodyFatInput = document.getElementById('measurement-bodyfat');
-  const fatMassInput = document.getElementById('measurement-fatmass');
-
-  if (!weightInput || !bodyFatInput || !fatMassInput) return;
-
-  function calculateFatMass() {
-    const weight = parseFloat(weightInput.value);
-    const bodyFat = parseFloat(bodyFatInput.value);
-    
-    if (weight && bodyFat) {
-      const fatMass = Math.round((weight * bodyFat / 100) * 10) / 10;
-      fatMassInput.value = fatMass;
-    } else {
-      fatMassInput.value = '';
-    }
-  }
-
-  weightInput.addEventListener('input', calculateFatMass);
-  bodyFatInput.addEventListener('input', calculateFatMass);
-}
-
-function initializeMeasurementsForm() {
-  const form = document.getElementById('measurements-form');
-  if (!form) return;
-  
-  // Set current app date
-  const dateInput = document.getElementById('measurement-date');
-  if (dateInput) {
-    dateInput.value = appData.currentDate;
-  }
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    addMeasurement();
-  });
-}
-
-function addMeasurement() {
-  const date = document.getElementById('measurement-date').value;
-  const weight = parseFloat(document.getElementById('measurement-weight').value);
-  const bodyFat = parseFloat(document.getElementById('measurement-bodyfat').value);
-  const muscle = parseFloat(document.getElementById('measurement-muscle').value);
-  const fatMass = parseFloat(document.getElementById('measurement-fatmass').value);
-  const bodyWater = parseFloat(document.getElementById('measurement-bodywater').value);
-
-  const measurement = { 
-    date, 
-    weight, 
-    bodyFat, 
-    muscle, 
-    fatMass: fatMass || (weight * bodyFat / 100),
-    bodyWater 
-  };
-  
-  appData.measurements.push(measurement);
-  
-  // Sort by date
-  appData.measurements.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  // Update current stats in bodyGoals
-  appData.bodyGoals.current = {
-    weight: weight,
-    bodyFat: bodyFat,
-    fatMass: fatMass || (weight * bodyFat / 100),
-    muscleMass: muscle,
-    bodyWater: bodyWater
-  };
-
-  // Increment backup counter
-  incrementBackupCounter();
-
-  // Update charts and dashboard
-  updateWeightChart();
-  updateBodyFatChart();
-  updateBodyCompositionDisplay();
-  updateDashboard();
-
-  // Reset form
-  document.getElementById('measurements-form').reset();
-  document.getElementById('measurement-date').value = appData.currentDate;
-
-  alert('🌸 Measurements saved!');
-  
-  // Save to cloud if signed in
-  if (isSignedIn) {
-    saveUserData();
-  }
-}
-
 // Menstrual Cycle Tracker
 function initializeCycleTracker() {
   const updateButton = document.getElementById('update-cycle');
@@ -1132,11 +1441,6 @@ function initializeCycleTracker() {
       
       updateMenstrualCycleCalculations();
       updateDashboard();
-      
-      // Save to cloud if signed in
-      if (isSignedIn) {
-        saveUserData();
-      }
       
       alert('🌸 Cycle updated!');
     }
@@ -1396,10 +1700,7 @@ function updateProgressChart() {
     charts.progressChart.destroy();
   }
 
-  const currentTotal = appData.currentPRs.squat.estimated1RM + 
-                      appData.currentPRs.bench.estimated1RM + 
-                      appData.currentPRs.deadlift.estimated1RM;
-
+  const currentTotal = getBest1RM('squat') + getBest1RM('bench') + getBest1RM('deadlift');
   const targetTotal = 60 + 65 + 120; // Target totals
 
   charts.progressChart = new Chart(ctx, {
@@ -1474,7 +1775,7 @@ function updateVolumeChart() {
   });
 }
 
-// Enhanced Dashboard Updates
+// Dashboard Updates
 function updateDashboard() {
   updatePRDisplay();
   updateBodyCompositionDisplay();
@@ -1486,76 +1787,116 @@ function updateBodyCompositionDisplay() {
   const target = appData.bodyGoals.target;
   const changes = appData.bodyGoals.changes;
 
-  // Update main status display
-  const statusDisplay = document.querySelector('.body-comp-card .status');
-  if (statusDisplay) {
-    statusDisplay.textContent = `${current.weight}kg → ${target.weight}kg`;
-  }
+  // Update dashboard body composition values from latest measurements
+  const latestMeasurement = appData.measurements[appData.measurements.length - 1];
+  if (latestMeasurement) {
+    // Update current values with latest measurement
+    appData.bodyGoals.current = {
+      weight: latestMeasurement.weight,
+      bodyFat: latestMeasurement.bodyFat,
+      fatMass: latestMeasurement.fatMass,
+      muscleMass: latestMeasurement.muscle,
+      bodyWater: latestMeasurement.bodyWater
+    };
+    
+    // Update dashboard displays
+    const dashboardBodyStatus = document.getElementById('dashboard-body-status');
+    const dashboardWeightValues = document.getElementById('dashboard-weight-values');
+    const dashboardFatValues = document.getElementById('dashboard-fat-values');
+    const dashboardMuscleValues = document.getElementById('dashboard-muscle-values');
+    const dashboardWaterValues = document.getElementById('dashboard-water-values');
+    
+    if (dashboardBodyStatus) {
+      dashboardBodyStatus.textContent = `${latestMeasurement.weight}kg → ${target.weight}kg`;
+    }
+    
+    if (dashboardWeightValues) {
+      dashboardWeightValues.textContent = `${latestMeasurement.weight}kg → ${target.weight}kg`;
+    }
+    
+    if (dashboardFatValues) {
+      dashboardFatValues.textContent = `${latestMeasurement.bodyFat}% (${latestMeasurement.fatMass}kg) → ${target.bodyFat}% (${target.fatMass}kg)`;
+    }
+    
+    if (dashboardMuscleValues) {
+      dashboardMuscleValues.textContent = `${latestMeasurement.muscle}kg → ${target.muscleMass}kg`;
+    }
+    
+    if (dashboardWaterValues) {
+      dashboardWaterValues.textContent = `${latestMeasurement.bodyWater}kg → ${target.bodyWater}kg`;
+    }
+    
+    // Update progress bars
+    const weightProgress = ((84.1 - latestMeasurement.weight) / (84.1 - target.weight)) * 100;
+    const fatProgress = ((38 - latestMeasurement.bodyFat) / (38 - target.bodyFat)) * 100;
+    const muscleProgress = ((latestMeasurement.muscle - 44.3) / (target.muscleMass - 44.3)) * 100;
+    const waterProgress = ((latestMeasurement.bodyWater - 38.1) / (target.bodyWater - 38.1)) * 100;
 
-  // Calculate progress percentages for each metric
-  const weightProgress = ((84.1 - current.weight) / (84.1 - target.weight)) * 100;
-  const fatProgress = ((38 - current.bodyFat) / (38 - target.bodyFat)) * 100;
-  const muscleProgress = ((current.muscleMass - 44.3) / (target.muscleMass - 44.3)) * 100;
-  const waterProgress = ((current.bodyWater - 38.1) / (target.bodyWater - 38.1)) * 100;
-
-  // Update progress bars and text
-  const progressBars = document.querySelectorAll('.body-comp-card .progress-fill');
-  const progressTexts = document.querySelectorAll('.body-comp-card .progress-text');
-  
-  if (progressBars.length >= 4 && progressTexts.length >= 4) {
-    // Weight progress
-    progressBars[0].style.width = `${Math.min(100, Math.max(0, weightProgress))}%`;
-    progressTexts[0].textContent = `-${(84.1 - current.weight).toFixed(1)}kg of -${changes.netWeightLoss}kg`;
+    const dashboardWeightProgress = document.getElementById('dashboard-weight-progress');
+    const dashboardFatProgress = document.getElementById('dashboard-fat-progress');
+    const dashboardMuscleProgress = document.getElementById('dashboard-muscle-progress');
+    const dashboardWaterProgress = document.getElementById('dashboard-water-progress');
     
-    // Fat progress  
-    progressBars[1].style.width = `${Math.min(100, Math.max(0, fatProgress))}%`;
-    progressTexts[1].textContent = `-${(38 - current.bodyFat).toFixed(1)}% body fat`;
+    const dashboardWeightText = document.getElementById('dashboard-weight-text');
+    const dashboardFatText = document.getElementById('dashboard-fat-text');
+    const dashboardMuscleText = document.getElementById('dashboard-muscle-text');
+    const dashboardWaterText = document.getElementById('dashboard-water-text');
     
-    // Muscle progress
-    progressBars[2].style.width = `${Math.min(100, Math.max(0, muscleProgress))}%`;
-    progressTexts[2].textContent = `+${(current.muscleMass - 44.3).toFixed(1)}kg of +${changes.muscleGain}kg`;
+    if (dashboardWeightProgress) dashboardWeightProgress.style.width = `${Math.min(100, Math.max(0, weightProgress))}%`;
+    if (dashboardFatProgress) dashboardFatProgress.style.width = `${Math.min(100, Math.max(0, fatProgress))}%`;
+    if (dashboardMuscleProgress) dashboardMuscleProgress.style.width = `${Math.min(100, Math.max(0, muscleProgress))}%`;
+    if (dashboardWaterProgress) dashboardWaterProgress.style.width = `${Math.min(100, Math.max(0, waterProgress))}%`;
     
-    // Water progress
-    progressBars[3].style.width = `${Math.min(100, Math.max(0, waterProgress))}%`;
-    progressTexts[3].textContent = `+${(current.bodyWater - 38.1).toFixed(1)}kg of +${changes.waterGain}kg`;
+    if (dashboardWeightText) dashboardWeightText.textContent = `-${(84.1 - latestMeasurement.weight).toFixed(1)}kg of -${changes.netWeightLoss}kg`;
+    if (dashboardFatText) dashboardFatText.textContent = `-${(38 - latestMeasurement.bodyFat).toFixed(1)}% body fat`;
+    if (dashboardMuscleText) dashboardMuscleText.textContent = `+${(latestMeasurement.muscle - 44.3).toFixed(1)}kg of +${changes.muscleGain}kg`;
+    if (dashboardWaterText) dashboardWaterText.textContent = `+${(latestMeasurement.bodyWater - 38.1).toFixed(1)}kg of +${changes.waterGain}kg`;
   }
 }
 
 function updatePRDisplay() {
-  const prItems = document.querySelectorAll('.pr-item');
+  // Update dashboard PR displays with best 1RMs
+  const dashboardSquatPR = document.getElementById('dashboard-squat-pr');
+  const dashboardSquatDate = document.getElementById('dashboard-squat-date');
+  const dashboardSquat1RM = document.getElementById('dashboard-squat-1rm');
   
-  // Update Squat
-  if (prItems[0]) {
-    const squatWeight = prItems[0].querySelector('.pr-weight');
-    const squatDate = prItems[0].querySelector('.pr-date');
-    const squat1RM = prItems[0].querySelector('.pr-1rm');
-    
-    if (squatWeight) squatWeight.textContent = `${appData.currentPRs.squat.weight}kg x${appData.currentPRs.squat.reps}`;
-    if (squatDate) squatDate.textContent = formatDate(appData.currentPRs.squat.date);
-    if (squat1RM) squat1RM.textContent = `(Est. 1RM: ${appData.currentPRs.squat.estimated1RM}kg)`;
-  }
+  const dashboardBenchPR = document.getElementById('dashboard-bench-pr');
+  const dashboardBenchDate = document.getElementById('dashboard-bench-date');
+  const dashboardBench1RM = document.getElementById('dashboard-bench-1rm');
   
-  // Update Bench
-  if (prItems[1]) {
-    const benchWeight = prItems[1].querySelector('.pr-weight');
-    const benchDate = prItems[1].querySelector('.pr-date');
-    const bench1RM = prItems[1].querySelector('.pr-1rm');
-    
-    if (benchWeight) benchWeight.textContent = `${appData.currentPRs.bench.weight}kg x${appData.currentPRs.bench.reps}`;
-    if (benchDate) benchDate.textContent = formatDate(appData.currentPRs.bench.date);
-    if (bench1RM) bench1RM.textContent = `(1RM: ${appData.currentPRs.bench.estimated1RM}kg)`;
-  }
+  const dashboardDeadliftPR = document.getElementById('dashboard-deadlift-pr');
+  const dashboardDeadliftDate = document.getElementById('dashboard-deadlift-date');
+  const dashboardDeadlift1RM = document.getElementById('dashboard-deadlift-1rm');
   
-  // Update Deadlift
-  if (prItems[2]) {
-    const deadliftWeight = prItems[2].querySelector('.pr-weight');
-    const deadliftDate = prItems[2].querySelector('.pr-date');
-    const deadlift1RM = prItems[2].querySelector('.pr-1rm');
+  // Get best PRs for each exercise
+  ['squat', 'bench', 'deadlift'].forEach(exercise => {
+    const categories = appData.currentPRs[exercise];
+    let bestPR = null;
+    let best1RM = 0;
     
-    if (deadliftWeight) deadliftWeight.textContent = `${appData.currentPRs.deadlift.weight}kg x${appData.currentPRs.deadlift.reps}`;
-    if (deadliftDate) deadliftDate.textContent = formatDate(appData.currentPRs.deadlift.date);
-    if (deadlift1RM) deadlift1RM.textContent = `(1RM: ${appData.currentPRs.deadlift.estimated1RM}kg)`;
-  }
+    Object.values(categories).forEach(pr => {
+      if (pr && pr.estimated1RM > best1RM) {
+        best1RM = pr.estimated1RM;
+        bestPR = pr;
+      }
+    });
+    
+    if (bestPR) {
+      if (exercise === 'squat') {
+        if (dashboardSquatPR) dashboardSquatPR.textContent = `${bestPR.weight}kg x${bestPR.reps}`;
+        if (dashboardSquatDate) dashboardSquatDate.textContent = formatDate(bestPR.date);
+        if (dashboardSquat1RM) dashboardSquat1RM.textContent = `(Est. 1RM: ${bestPR.estimated1RM}kg)`;
+      } else if (exercise === 'bench') {
+        if (dashboardBenchPR) dashboardBenchPR.textContent = `${bestPR.weight}kg x${bestPR.reps}`;
+        if (dashboardBenchDate) dashboardBenchDate.textContent = formatDate(bestPR.date);
+        if (dashboardBench1RM) dashboardBench1RM.textContent = `(Est. 1RM: ${bestPR.estimated1RM}kg)`;
+      } else if (exercise === 'deadlift') {
+        if (dashboardDeadliftPR) dashboardDeadliftPR.textContent = `${bestPR.weight}kg x${bestPR.reps}`;
+        if (dashboardDeadliftDate) dashboardDeadliftDate.textContent = formatDate(bestPR.date);
+        if (dashboardDeadlift1RM) dashboardDeadlift1RM.textContent = `(Est. 1RM: ${bestPR.estimated1RM}kg)`;
+      }
+    }
+  });
 }
 
 function updateWorkoutPreview() {
@@ -1569,16 +1910,17 @@ function updateWorkoutPreview() {
   else if (currentPhase.key === 'phase3') intensity = 0.9;
   else if (currentPhase.key === 'phase4') intensity = 0.85;
   
-  const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * intensity / 2.5) * 2.5;
-  const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * intensity / 2.5) * 2.5;
-  const deadliftWeight = Math.round(appData.currentPRs.deadlift.estimated1RM * intensity / 2.5) * 2.5;
+  const squatWeight = Math.round(getBest1RM('squat') * intensity / 2.5) * 2.5;
+  const benchWeight = Math.round(getBest1RM('bench') * intensity / 2.5) * 2.5;
+  const deadliftWeight = Math.round(getBest1RM('deadlift') * intensity / 2.5) * 2.5;
   
-  const liftPreviews = document.querySelectorAll('.lift-preview');
-  if (liftPreviews.length >= 3) {
-    liftPreviews[0].innerHTML = `<strong>Squat:</strong> 5x5 @ ${squatWeight}kg (${Math.round(intensity * 100)}%)`;
-    liftPreviews[1].innerHTML = `<strong>Bench:</strong> 4x6 @ ${benchWeight}kg (${Math.round(intensity * 100)}%)`;
-    liftPreviews[2].innerHTML = `<strong>Deadlift:</strong> 4x5 @ ${deadliftWeight}kg (${Math.round(intensity * 100)}%)`;
-  }
+  const dashboardSquatPreview = document.getElementById('dashboard-squat-preview');
+  const dashboardBenchPreview = document.getElementById('dashboard-bench-preview');
+  const dashboardDeadliftPreview = document.getElementById('dashboard-deadlift-preview');
+  
+  if (dashboardSquatPreview) dashboardSquatPreview.innerHTML = `<strong>Squat:</strong> 5x5 @ ${squatWeight}kg (${Math.round(intensity * 100)}%)`;
+  if (dashboardBenchPreview) dashboardBenchPreview.innerHTML = `<strong>Bench:</strong> 4x6 @ ${benchWeight}kg (${Math.round(intensity * 100)}%)`;
+  if (dashboardDeadliftPreview) dashboardDeadliftPreview.innerHTML = `<strong>Deadlift:</strong> 4x5 @ ${deadliftWeight}kg (${Math.round(intensity * 100)}%)`;
   
   // Update actual workout weights in workout section
   updateWorkoutWeights();
@@ -1594,53 +1936,59 @@ function updateWorkoutWeights() {
   else if (currentPhase.key === 'phase3') intensity = 0.9;
   else if (currentPhase.key === 'phase4') intensity = 0.85;
   
-  const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * intensity / 2.5) * 2.5;
-  const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * intensity / 2.5) * 2.5;
-  const deadliftWeight = Math.round(appData.currentPRs.deadlift.estimated1RM * intensity / 2.5) * 2.5;
+  const squatWeight = Math.round(getBest1RM('squat') * intensity / 2.5) * 2.5;
+  const benchWeight = Math.round(getBest1RM('bench') * intensity / 2.5) * 2.5;
+  const deadliftWeight = Math.round(getBest1RM('deadlift') * intensity / 2.5) * 2.5;
   
   // Update exercise intensities
-  const intensityDisplays = document.querySelectorAll('.exercise-intensity');
-  if (intensityDisplays.length >= 3) {
-    intensityDisplays[0].textContent = `${Math.round(intensity * 100)}% (${squatWeight}kg)`;
-    intensityDisplays[1].textContent = `${Math.round(intensity * 100)}% (${benchWeight}kg)`;
-    intensityDisplays[2].textContent = `${Math.round(intensity * 100)}% (${deadliftWeight}kg)`;
-  }
+  const squatIntensity = document.getElementById('squat-intensity');
+  const benchIntensity = document.getElementById('bench-intensity');
+  const deadliftIntensity = document.getElementById('deadlift-intensity');
   
-  // Update set rows
-  const exerciseCards = document.querySelectorAll('.exercise-card');
+  if (squatIntensity) squatIntensity.textContent = `${Math.round(intensity * 100)}% (${squatWeight}kg)`;
+  if (benchIntensity) benchIntensity.textContent = `${Math.round(intensity * 100)}% (${benchWeight}kg)`;
+  if (deadliftIntensity) deadliftIntensity.textContent = `${Math.round(intensity * 100)}% (${deadliftWeight}kg)`;
   
-  // Squat
-  if (exerciseCards[0]) {
-    const setRows = exerciseCards[0].querySelectorAll('.set-row span');
-    if (setRows.length >= 6) {
-      setRows[0].textContent = `Warm-up: ${Math.round((squatWeight * 0.7) / 2.5) * 2.5}kg x 8`;
-      for (let i = 1; i <= 5; i++) {
-        setRows[i].textContent = `Set ${i}: ${squatWeight}kg x 5`;
-      }
-    }
-  }
+  // Update squat sets
+  const squatWarmup = document.getElementById('squat-warmup');
+  const squatSet1 = document.getElementById('squat-set1');
+  const squatSet2 = document.getElementById('squat-set2');
+  const squatSet3 = document.getElementById('squat-set3');
+  const squatSet4 = document.getElementById('squat-set4');
+  const squatSet5 = document.getElementById('squat-set5');
   
-  // Bench
-  if (exerciseCards[1]) {
-    const setRows = exerciseCards[1].querySelectorAll('.set-row span');
-    if (setRows.length >= 5) {
-      setRows[0].textContent = `Warm-up: ${Math.round((benchWeight * 0.7) / 2.5) * 2.5}kg x 8`;
-      for (let i = 1; i <= 4; i++) {
-        setRows[i].textContent = `Set ${i}: ${benchWeight}kg x 6`;
-      }
-    }
-  }
+  if (squatWarmup) squatWarmup.textContent = `Warm-up: ${Math.round((squatWeight * 0.7) / 2.5) * 2.5}kg x 8`;
+  if (squatSet1) squatSet1.textContent = `Set 1: ${squatWeight}kg x 5`;
+  if (squatSet2) squatSet2.textContent = `Set 2: ${squatWeight}kg x 5`;
+  if (squatSet3) squatSet3.textContent = `Set 3: ${squatWeight}kg x 5`;
+  if (squatSet4) squatSet4.textContent = `Set 4: ${squatWeight}kg x 5`;
+  if (squatSet5) squatSet5.textContent = `Set 5: ${squatWeight}kg x 5`;
   
-  // Deadlift
-  if (exerciseCards[2]) {
-    const setRows = exerciseCards[2].querySelectorAll('.set-row span');
-    if (setRows.length >= 5) {
-      setRows[0].textContent = `Warm-up: ${Math.round((deadliftWeight * 0.7) / 2.5) * 2.5}kg x 5`;
-      for (let i = 1; i <= 4; i++) {
-        setRows[i].textContent = `Set ${i}: ${deadliftWeight}kg x 5`;
-      }
-    }
-  }
+  // Update bench sets
+  const benchWarmup = document.getElementById('bench-warmup');
+  const benchSet1 = document.getElementById('bench-set1');
+  const benchSet2 = document.getElementById('bench-set2');
+  const benchSet3 = document.getElementById('bench-set3');
+  const benchSet4 = document.getElementById('bench-set4');
+  
+  if (benchWarmup) benchWarmup.textContent = `Warm-up: ${Math.round((benchWeight * 0.7) / 2.5) * 2.5}kg x 8`;
+  if (benchSet1) benchSet1.textContent = `Set 1: ${benchWeight}kg x 6`;
+  if (benchSet2) benchSet2.textContent = `Set 2: ${benchWeight}kg x 6`;
+  if (benchSet3) benchSet3.textContent = `Set 3: ${benchWeight}kg x 6`;
+  if (benchSet4) benchSet4.textContent = `Set 4: ${benchWeight}kg x 6`;
+  
+  // Update deadlift sets
+  const deadliftWarmup = document.getElementById('deadlift-warmup');
+  const deadliftSet1 = document.getElementById('deadlift-set1');
+  const deadliftSet2 = document.getElementById('deadlift-set2');
+  const deadliftSet3 = document.getElementById('deadlift-set3');
+  const deadliftSet4 = document.getElementById('deadlift-set4');
+  
+  if (deadliftWarmup) deadliftWarmup.textContent = `Warm-up: ${Math.round((deadliftWeight * 0.7) / 2.5) * 2.5}kg x 5`;
+  if (deadliftSet1) deadliftSet1.textContent = `Set 1: ${deadliftWeight}kg x 5`;
+  if (deadliftSet2) deadliftSet2.textContent = `Set 2: ${deadliftWeight}kg x 5`;
+  if (deadliftSet3) deadliftSet3.textContent = `Set 3: ${deadliftWeight}kg x 5`;
+  if (deadliftSet4) deadliftSet4.textContent = `Set 4: ${deadliftWeight}kg x 5`;
 }
 
 // Utility Functions
@@ -1650,6 +1998,13 @@ function formatDate(dateString) {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
+  });
+}
+
+function formatDateShort(date) {
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: '2-digit'
   });
 }
 
@@ -1666,17 +2021,8 @@ function formatDateFull(date) {
   return `${dayName}, ${day} ${month} ${year}`;
 }
 
-// Additional Event Listeners
+// Event Listeners for set completion tracking
 document.addEventListener('DOMContentLoaded', function() {
-  // Shake calculator
-  const shakeButton = document.querySelector('.shake-calculator .btn--secondary');
-  if (shakeButton) {
-    shakeButton.addEventListener('click', function() {
-      incrementBackupCounter();
-      alert('🌸 Shake added to log!\n\n278 kcal, 53.5g protein has been counted towards today\'s macros.');
-    });
-  }
-
   // Set completion tracking with enhanced feedback
   const checkboxes = document.querySelectorAll('.set-checkbox');
   checkboxes.forEach(checkbox => {
@@ -1696,11 +2042,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
           setRow.style.transform = 'scale(1)';
         }, 200);
-        
-        // Save to cloud if signed in
-        if (isSignedIn) {
-          saveUserData();
-        }
       } else {
         setRow.style.backgroundColor = '';
         setRow.style.color = '';
