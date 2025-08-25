@@ -175,20 +175,26 @@ function startZurichClock() {
     timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit'
   });
 
-  function tick() {
+function tick() {
+  try {
     const now = new Date();
     const nav = document.getElementById('nav-date');
     if (nav) nav.textContent = `${dateFmt.format(now)} • ${timeFmt.format(now)} (Zürich)`;
 
-    // Utrzymuj currentDate w formacie YYYY-MM-DD zgodnie ze strefą Zurich:
+    // Utrzymuj currentDate w formacie YYYY-MM-DD (Europe/Zurich)
     const ymd = dateIsoFmt.format(now); // np. 2025-08-25
     if (window.appData && window.appData.currentDate !== ymd) {
       window.appData.currentDate = ymd;
-      if (typeof updateAllDateDependencies === 'function') {
-        updateAllDateDependencies();
+      // Ważne: u Ciebie ta funkcja nazywa się updateAllSections
+      if (typeof updateAllSections === 'function') {
+        updateAllSections();
       }
     }
+  } catch (e) {
+    console.error('Clock tick error:', e);
   }
+}
+
   tick();
   setInterval(tick, 1000);
 }
