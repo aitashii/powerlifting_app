@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌸🐱 Aitashii Powerlifting Tracker - FIXED UI</title>
+    <link rel="stylesheet" href="style-fixed.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase v9 -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBQ2QV2DVRXqNVjUhFx7kw9pNK7f4QRE8U",
+            authDomain: "aitashii-powerlifting.firebaseapp.com",
+            projectId: "aitashii-powerlifting",
+            storageBucket: "aitashii-powerlifting.firebasestorage.app",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+        
+        // Initialize Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+            window.firebaseAuth = firebase.auth();
+            window.firebaseDb = firebase.firestore();
+            window.firebaseAuthProvider = firebase.auth.GithubAuthProvider;
+            window.firebaseSignInWithPopup = firebase.auth().signInWithPopup.bind(firebase.auth());
+            window.firebaseSignOut = firebase.auth().signOut.bind(firebase.auth());
+            window.firebaseOnAuthStateChanged = firebase.auth().onAuthStateChanged.bind(firebase.auth());
+            window.firebaseDoc = firebase.firestore().doc.bind(firebase.firestore());
+            window.firebaseSetDoc = firebase.firestore().doc.bind(firebase.firestore());
+            window.firebaseGetDoc = firebase.firestore().doc.bind(firebase.firestore());
+            window.firebaseOnSnapshot = firebase.firestore().doc.bind(firebase.firestore());
+            window.firebaseServerTimestamp = firebase.firestore.FieldValue.serverTimestamp;
+            window.firebaseGithubAuthProvider = firebase.auth.GithubAuthProvider;
+            console.log('🔥 Firebase initialized successfully');
+        } catch (error) {
+            console.warn('🔥 Firebase initialization failed:', error);
+        }
+    </script>
+</head>
+<body>
+    <div class="app">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav__brand">
+                <h1>🌸 Aitashii Powerlifting 🐱</h1>
+                <span class="nav__date" id="nav-date">Sunday, August 25, 2025</span>
+            </div>
+            
+            <div class="nav__menu">
+                <button class="nav__item nav__item--active" data-section="dashboard">Dashboard</button>
+                <button class="nav__item" data-section="workout">Today's Workout</button>
+                <button class="nav__item" data-section="pr">New PR</button>
+                <button class="nav__item" data-section="measurements">Measurements</button>
+                <button class="nav__item" data-section="cycle">Cycle</button>
+                <button class="nav__item" data-section="nutrition">Nutrition</button>
+                <button class="nav__item" data-section="progress">Progress</button>
+            </div>
+            
+            <div class="nav__auth">
+                <button id="login-btn" class="btn btn--sm btn--primary">Sign in with GitHub</button>
+                <div id="user-info" class="user-info" style="display: none;">
+                    <img id="user-avatar" class="user-avatar" width="32" height="32" alt="User">
+                    <button id="logout-btn" class="btn btn--sm btn--secondary">Sign out</button>
+                </div>
+                <div class="nav__backup">
+                    <span id="backup-indicator" class="backup-indicator">
+                        Auto-backup: <span id="backup-counter">0/3 changes</span>
+                    </span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section section--active">
+                <div class="container">
+                    <h2>Dashboard</h2>
+                    
+                    <!-- Date Control Card -->
+                    <div class="date-control-card card">
+                        <div class="card__header">
+                            <h3>Date Control</h3>
+                            <span class="status status--info">Controls entire system</span>
+                        </div>
+                        <div class="card__body">
+                            <div class="date-control">
+                                <div class="current-date-display">
+                                    <label class="form-label">Current system date:</label>
+                                    <div id="current-date-text" class="current-date-text">Sunday, August 25, 2025</div>
+                                </div>
+                                <div class="date-picker-group">
+                                    <label class="form-label" for="date-picker">Change date:</label>
+                                    <input type="date" id="date-picker" class="form-control date-picker-input" value="2025-08-25">
+                                    <button id="update-date-btn" class="btn btn--primary">Update System</button>
+                                </div>
+                                <div class="date-impact-info">
+                                    <small>This date controls: training phases, today's workout, cycle phase, progress, competition countdown</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Cards Grid -->
+                    <div class="summary-grid">
+                        <!-- Current PRs Card -->
+                        <div class="card summary-card">
+                            <div class="card__header">
+                                <h3>Current PRs</h3>
+                                <span id="current-phase-status" class="status status--success">Phase 1: Hypertrophy</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="pr-item">
+                                    <span class="pr-lift">Squat</span>
+                                    <div class="pr-details">
+                                        <span class="pr-weight">40kg x5</span>
+                                        <span class="pr-date">23.08.2025</span>
+                                        <span class="pr-1rm">(Est. 1RM: 45kg)</span>
+                                    </div>
+                                </div>
+                                <div class="pr-item">
+                                    <span class="pr-lift">Bench</span>
+                                    <div class="pr-details">
+                                        <span class="pr-weight">45kg x1</span>
+                                        <span class="pr-date">23.08.2025</span>
+                                        <span class="pr-1rm">(1RM: 45kg)</span>
+                                    </div>
+                                </div>
+                                <div class="pr-item">
+                                    <span class="pr-lift">Deadlift</span>
+                                    <div class="pr-details">
+                                        <span class="pr-weight">90kg x1</span>
+                                        <span class="pr-date">31.07.2025</span>
+                                        <span class="pr-1rm">(1RM: 90kg)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Body Composition Card -->
+                        <div class="card summary-card body-comp-card">
+                            <div class="card__header">
+                                <h3>Body Composition</h3>
+                                <span class="status status--info">84.1kg → 72kg</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="body-metric">
+                                    <div class="metric-header">
+                                        <span>Weight:</span>
+                                        <span class="metric-values">84.1kg → 72kg</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 25%"></div>
+                                    </div>
+                                    <span class="progress-text">-12.1kg to goal</span>
+                                </div>
+                                
+                                <div class="body-metric">
+                                    <div class="metric-header">
+                                        <span>Fat:</span>
+                                        <span class="metric-values">38% (32.0kg) → 18% (13.0kg)</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill progress-fill--error" style="width: 15%"></div>
+                                    </div>
+                                    <span class="progress-text">-19.0kg fat to lose</span>
+                                </div>
+                                
+                                <div class="body-metric">
+                                    <div class="metric-header">
+                                        <span>Muscle:</span>
+                                        <span class="metric-values">44.3kg → 50.2kg</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill progress-fill--success" style="width: 35%"></div>
+                                    </div>
+                                    <span class="progress-text">+5.9kg muscle to gain</span>
+                                </div>
+                                
+                                <div class="body-metric">
+                                    <div class="metric-header">
+                                        <span>Water:</span>
+                                        <span class="metric-values">38.1kg → 43.1kg</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill progress-fill--info" style="width: 40%"></div>
+                                    </div>
+                                    <span class="progress-text">+5.0kg</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Today's Workout Preview -->
+                        <div class="card summary-card">
+                            <div class="card__header">
+                                <h3>Today's Workout</h3>
+                                <span id="workout-day-status" class="status status--warning">6xSBD</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="workout-preview">
+                                    <div class="lift-preview">
+                                        <strong>Squat:</strong> 5x5 @ 30kg (67%)
+                                    </div>
+                                    <div class="lift-preview">
+                                        <strong>Bench:</strong> 4x6 @ 30kg (67%)
+                                    </div>
+                                    <div class="lift-preview">
+                                        <strong>Deadlift:</strong> 4x5 @ 60kg (67%)
+                                    </div>
+                                    <div class="accessories">
+                                        <strong>Accessories:</strong> Adductor work + Hip Thrusts
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Menstrual Cycle Card -->
+                        <div class="card summary-card">
+                            <div class="card__header">
+                                <h3>Cycle Phase</h3>
+                                <span id="cycle-phase" class="status status--info">Follicular Phase</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="stat-item">
+                                    <span>Cycle day:</span>
+                                    <span id="cycle-day" class="stat-value">5</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Training energy:</span>
+                                    <span id="training-energy" class="stat-value">High</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Last period:</span>
+                                    <span id="last-period" class="stat-value">20.08.2025</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Days since period:</span>
+                                    <span id="days-since-period" class="stat-value">5 days</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Weekly Progress Summary -->
+                        <div class="card summary-card">
+                            <div class="card__header">
+                                <h3 id="week-progress-title">Week 1 - Progress</h3>
+                                <span class="status status--success">5/6 workouts</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="weekly-stats" id="weekly-stats">
+                                    <div class="day-indicator completed">M</div>
+                                    <div class="day-indicator completed">T</div>
+                                    <div class="day-indicator completed">W</div>
+                                    <div class="day-indicator completed">T</div>
+                                    <div class="day-indicator rest">F</div>
+                                    <div class="day-indicator completed">S</div>
+                                    <div class="day-indicator active">S</div>
+                                </div>
+                                <div class="volume-summary">
+                                    <span>Weekly volume: 12,450kg</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nutrition Today -->
+                        <div class="card summary-card">
+                            <div class="card__header">
+                                <h3>Nutrition Today</h3>
+                                <span id="nutrition-day-type" class="status status--warning">Training Day</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="stat-item">
+                                    <span>Goal calories:</span>
+                                    <span id="daily-calories" class="stat-value">2500</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Protein:</span>
+                                    <span id="daily-protein" class="stat-value">180g</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Carbs:</span>
+                                    <span id="daily-carbs" class="stat-value">280g</span>
+                                </div>
+                                <div class="shake-info">
+                                    <strong>My shake:</strong> 278 kcal, 53.5g protein
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Optimizations -->
+                        <div class="card summary-card">
+                            <div class="card__header">
+                                <h3>Technical Optimizations</h3>
+                                <span class="status status--info">APE 1.036</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="tech-reminder">
+                                    <strong>Squat:</strong> Standard stance, shoulder width
+                                </div>
+                                <div class="tech-reminder">
+                                    <strong>Bench:</strong> Wide grip, max arch
+                                </div>
+                                <div class="tech-reminder">
+                                    <strong>Deadlift:</strong> Conventional, hip-width stance
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Competition Countdown -->
+                        <div class="card summary-card">
+                            <div class="card__header">
+                                <h3>To Regional Competition</h3>
+                                <span class="status status--error">Switzerland - Drug Free</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="countdown">
+                                    <div class="countdown-item">
+                                        <span id="days-to-competition" class="countdown-number">215</span>
+                                        <span class="countdown-label">days</span>
+                                    </div>
+                                    <div class="countdown-item">
+                                        <span id="weeks-to-competition" class="countdown-number">30</span>
+                                        <span class="countdown-label">weeks</span>
+                                    </div>
+                                </div>
+                                <div class="goal-lifts">
+                                    <div>Squat: 60kg (+15kg)</div>
+                                    <div>Bench: 65kg (+20kg)</div>
+                                    <div>Deadlift: 120kg (+30kg)</div>
+                                    <div class="competition-location">German-speaking cantons</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Today's Workout Section -->
+            <section id="workout" class="section">
+                <div class="container">
+                    <h2 id="workout-section-title">Today's Workout - Sunday August 25, 2025</h2>
+                    <div class="workout-header">
+                        <div class="phase-info">
+                            <span id="workout-phase-status" class="status status--success">Phase 1: Hypertrophy + Rehab</span>
+                            <span id="workout-week-info">Week 1/6 | Day 7/7</span>
+                        </div>
+                        <div class="workout-timer">
+                            <button id="start-timer" class="btn btn--primary">Start Timer</button>
+                            <span id="timer-display">00:00:00</span>
+                        </div>
+                    </div>
+
+                    <div class="workout-exercises">
+                        <div class="exercise-group">
+                            <h3>Main Movements</h3>
+                            
+                            <div class="exercise-card">
+                                <div class="exercise-header">
+                                    <h4>Squat</h4>
+                                    <span class="exercise-intensity">67% (30kg)</span>
+                                </div>
+                                <div class="exercise-sets">
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Warm-up: 20kg x 8</span>
+                                        <button onclick="startRestTimer(90)" class="btn btn--sm btn--secondary">1:30 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 1: 30kg x 5</span>
+                                        <button onclick="startRestTimer(180)" class="btn btn--sm btn--secondary">3:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 2: 30kg x 5</span>
+                                        <button onclick="startRestTimer(180)" class="btn btn--sm btn--secondary">3:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 3: 30kg x 5</span>
+                                        <button onclick="startRestTimer(180)" class="btn btn--sm btn--secondary">3:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 4: 30kg x 5</span>
+                                        <button onclick="startRestTimer(180)" class="btn btn--sm btn--secondary">3:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 5: 30kg x 5</span>
+                                        <button onclick="startRestTimer(180)" class="btn btn--sm btn--secondary">3:00 rest</button>
+                                    </div>
+                                </div>
+                                <textarea class="exercise-notes" placeholder="Notes..."></textarea>
+                            </div>
+
+                            <div class="exercise-card">
+                                <div class="exercise-header">
+                                    <h4>Bench Press</h4>
+                                    <span class="exercise-intensity">67% (30kg)</span>
+                                </div>
+                                <div class="exercise-sets">
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Warm-up: 20kg x 8</span>
+                                        <button onclick="startRestTimer(90)" class="btn btn--sm btn--secondary">1:30 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 1: 30kg x 6</span>
+                                        <button onclick="startRestTimer(180)" class="btn btn--sm btn--secondary">3:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 2: 30kg x 6</span>
+                                        <button onclick="startRestTimer(180)" class="btn btn--sm btn--secondary">3:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 3: 30kg x 6</span>
+                                        <button onclick="startRestTimer(180)" class="btn btn--sm btn--secondary">3:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 4: 30kg x 6</span>
+                                        <button onclick="startRestTimer(180)" class="btn btn--sm btn--secondary">3:00 rest</button>
+                                    </div>
+                                </div>
+                                <textarea class="exercise-notes" placeholder="Notes..."></textarea>
+                            </div>
+
+                            <div class="exercise-card">
+                                <div class="exercise-header">
+                                    <h4>Deadlift</h4>
+                                    <span class="exercise-intensity">67% (60kg)</span>
+                                </div>
+                                <div class="exercise-sets">
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Warm-up: 40kg x 5</span>
+                                        <button onclick="startRestTimer(120)" class="btn btn--sm btn--secondary">2:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 1: 60kg x 5</span>
+                                        <button onclick="startRestTimer(240)" class="btn btn--sm btn--secondary">4:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 2: 60kg x 5</span>
+                                        <button onclick="startRestTimer(240)" class="btn btn--sm btn--secondary">4:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 3: 60kg x 5</span>
+                                        <button onclick="startRestTimer(240)" class="btn btn--sm btn--secondary">4:00 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 4: 60kg x 5</span>
+                                        <button onclick="startRestTimer(240)" class="btn btn--sm btn--secondary">4:00 rest</button>
+                                    </div>
+                                </div>
+                                <textarea class="exercise-notes" placeholder="Notes..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="exercise-group">
+                            <h3>Accessories (Priority: Adductors)</h3>
+                            
+                            <div class="exercise-card">
+                                <div class="exercise-header">
+                                    <h4>Adductor Work</h4>
+                                    <span class="exercise-priority">PRIORITY</span>
+                                </div>
+                                <div class="exercise-sets">
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Cossack Squats: 3x12-15</span>
+                                        <button onclick="startRestTimer(90)" class="btn btn--sm btn--secondary">1:30 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Lateral Lunges: 3x10/leg</span>
+                                        <button onclick="startRestTimer(90)" class="btn btn--sm btn--secondary">1:30 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Copenhagen Planks: 3x30s</span>
+                                        <button onclick="startRestTimer(60)" class="btn btn--sm btn--secondary">1:00 rest</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="exercise-card">
+                                <div class="exercise-header">
+                                    <h4>Hip Thrusts</h4>
+                                </div>
+                                <div class="exercise-sets">
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 1: 40kg x 10</span>
+                                        <button onclick="startRestTimer(90)" class="btn btn--sm btn--secondary">1:30 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 2: 40kg x 10</span>
+                                        <button onclick="startRestTimer(90)" class="btn btn--sm btn--secondary">1:30 rest</button>
+                                    </div>
+                                    <div class="set-row">
+                                        <input type="checkbox" class="set-checkbox">
+                                        <span>Set 3: 40kg x 10</span>
+                                        <button onclick="startRestTimer(90)" class="btn btn--sm btn--secondary">1:30 rest</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PR Entry Section -->
+            <section id="pr" class="section">
+                <div class="container">
+                    <h2>New PR</h2>
+                    <div class="pr-form-container">
+                        <form id="pr-form" class="card">
+                            <div class="card__header">
+                                <h3>Add New Record</h3>
+                            </div>
+                            <div class="card__body">
+                                <div class="form-group">
+                                    <label class="form-label">Exercise</label>
+                                    <select id="pr-exercise" class="form-control" required>
+                                        <option value="">Choose exercise</option>
+                                        <option value="squat">Squat</option>
+                                        <option value="bench">Bench Press</option>
+                                        <option value="deadlift">Deadlift</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Weight (kg)</label>
+                                    <input type="number" id="pr-weight" class="form-control" step="2.5" min="10" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Number of reps</label>
+                                    <input type="number" id="pr-reps" class="form-control" min="1" max="10" value="1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" id="pr-date" class="form-control" required>
+                                </div>
+                                <button type="submit" class="btn btn--primary btn--full-width">Add PR and Update Program</button>
+                            </div>
+                        </form>
+
+                        <div class="pr-impact card">
+                            <div class="card__header">
+                                <h3>Training Impact</h3>
+                            </div>
+                            <div class="card__body">
+                                <p>After adding a new PR, all training weights will be automatically recalculated based on the new 1RM.</p>
+                                <div class="estimated-1rm">
+                                    <h4>Estimated 1RM:</h4>
+                                    <span id="estimated-1rm-display">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pr-history">
+                        <h3>PR History</h3>
+                        <div class="pr-chart-container" style="position: relative; height: 400px;">
+                            <canvas id="pr-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Enhanced Measurements Section -->
+            <section id="measurements" class="section">
+                <div class="container">
+                    <h2>Measurements and Body Composition</h2>
+                    
+                    <form id="measurements-form" class="card">
+                        <div class="card__header">
+                            <h3>Weekly Measurements</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="measurements-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" id="measurement-date" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Weight (kg)</label>
+                                    <input type="number" id="measurement-weight" class="form-control" step="0.1" min="40" max="120" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Body Fat (%)</label>
+                                    <input type="number" id="measurement-bodyfat" class="form-control" step="0.1" min="10" max="50">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Muscle Mass (kg)</label>
+                                    <input type="number" id="measurement-muscle" class="form-control" step="0.1" min="20" max="60">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Fat Mass (kg)</label>
+                                    <input type="number" id="measurement-fatmass" class="form-control" step="0.1" min="5" max="50" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Body Water (kg)</label>
+                                    <input type="number" id="measurement-bodywater" class="form-control" step="0.1" min="20" max="60">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn--primary btn--full-width">Save Measurements</button>
+                        </div>
+                    </form>
+
+                    <div class="measurements-charts">
+                        <div class="chart-container" style="position: relative; height: 400px;">
+                            <canvas id="weight-chart"></canvas>
+                        </div>
+                        <div class="chart-container" style="position: relative; height: 400px;">
+                            <canvas id="bodyfat-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Menstrual Cycle Section -->
+            <section id="cycle" class="section">
+                <div class="container">
+                    <h2>Menstrual Cycle Tracking</h2>
+                    
+                    <div class="cycle-input card">
+                        <div class="card__header">
+                            <h3>Update Cycle</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="form-group">
+                                <label class="form-label">First day of last period</label>
+                                <input type="date" id="period-date" class="form-control">
+                            </div>
+                            <button id="update-cycle" class="btn btn--primary">Update Cycle</button>
+                        </div>
+                    </div>
+
+                    <div class="cycle-info">
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>Current Phase</h3>
+                            </div>
+                            <div class="card__body">
+                                <div id="current-cycle-info">
+                                    <div class="cycle-phase-display">
+                                        <span id="phase-name">Follicular Phase</span>
+                                        <span id="cycle-day-display">Day 5</span>
+                                    </div>
+                                    <div class="training-recommendations">
+                                        <h4>Training Recommendations:</h4>
+                                        <div id="training-recs">
+                                            <div class="rec-item">✓ High training energy</div>
+                                            <div class="rec-item">✓ Good load tolerance</div>
+                                            <div class="rec-item">✓ Fast recovery</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cycle-calendar">
+                            <h3>Cycle Calendar</h3>
+                            <div id="cycle-calendar-display" class="calendar-grid">
+                                <!-- Calendar will be generated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Nutrition Section -->
+            <section id="nutrition" class="section">
+                <div class="container">
+                    <h2>Nutrition</h2>
+                    
+                    <div class="nutrition-targets card">
+                        <div class="card__header">
+                            <h3 id="nutrition-targets-title">Today's Goals - Training Day</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="macro-targets">
+                                <div class="macro-item">
+                                    <span class="macro-label">Calories:</span>
+                                    <span class="macro-value" id="nutrition-calories">2500 kcal</span>
+                                </div>
+                                <div class="macro-item">
+                                    <span class="macro-label">Protein:</span>
+                                    <span class="macro-value" id="nutrition-protein">180g</span>
+                                </div>
+                                <div class="macro-item">
+                                    <span class="macro-label">Fats:</span>
+                                    <span class="macro-value">85g</span>
+                                </div>
+                                <div class="macro-item">
+                                    <span class="macro-label">Carbs:</span>
+                                    <span class="macro-value" id="nutrition-carbs">280g</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="shake-calculator card">
+                        <div class="card__header">
+                            <h3>My Shake Calculator</h3>
+                        </div>
+                        <div class="card__body">
+                            <div class="shake-recipe">
+                                <h4>Ingredients:</h4>
+                                <div class="ingredient">1.5 servings Gold Standard Whey (chocolate)</div>
+                                <div class="ingredient">250ml high protein lactose-free milk (Denner)</div>
+                            </div>
+                            <div class="shake-nutrition">
+                                <div class="nutrition-row">
+                                    <span>Calories:</span>
+                                    <span class="nutrition-value">278 kcal</span>
+                                </div>
+                                <div class="nutrition-row">
+                                    <span>Protein:</span>
+                                    <span class="nutrition-value">53.5g</span>
+                                </div>
+                                <div class="nutrition-row">
+                                    <span>Fats:</span>
+                                    <span class="nutrition-value">6g</span>
+                                </div>
+                                <div class="nutrition-row">
+                                    <span>Carbs:</span>
+                                    <span class="nutrition-value">10.8g</span>
+                                </div>
+                            </div>
+                            <button class="btn btn--secondary btn--full-width">Add to Log</button>
+                        </div>
+                    </div>
+
+                    <div class="nutrition-schedule">
+                        <h3>Weekly Nutrition Plan</h3>
+                        <div class="schedule-grid" id="nutrition-week-schedule">
+                            <div class="day-nutrition active">
+                                <h4>Mon - Training</h4>
+                                <div class="day-macros">2500 kcal | 180g | 85g | 280g</div>
+                            </div>
+                            <div class="day-nutrition">
+                                <h4>Tue - Training</h4>
+                                <div class="day-macros">2500 kcal | 180g | 85g | 280g</div>
+                            </div>
+                            <div class="day-nutrition">
+                                <h4>Wed - Training</h4>
+                                <div class="day-macros">2500 kcal | 180g | 85g | 280g</div>
+                            </div>
+                            <div class="day-nutrition">
+                                <h4>Thu - Training</h4>
+                                <div class="day-macros">2500 kcal | 180g | 85g | 280g</div>
+                            </div>
+                            <div class="day-nutrition rest">
+                                <h4>Fri - Rest</h4>
+                                <div class="day-macros">2200 kcal | 160g | 70g | 250g</div>
+                            </div>
+                            <div class="day-nutrition">
+                                <h4>Sat - Training</h4>
+                                <div class="day-macros">2500 kcal | 180g | 85g | 280g</div>
+                            </div>
+                            <div class="day-nutrition">
+                                <h4>Sun - Training</h4>
+                                <div class="day-macros">2500 kcal | 180g | 85g | 280g</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Enhanced Progress Section with All 4 Phases -->
+            <section id="progress" class="section">
+                <div class="container">
+                    <h2>Progress and Statistics</h2>
+                    
+                    <div class="progress-overview">
+                        <div class="card">
+                            <div class="card__header">
+                                <h3>6-Month Competition Plan</h3>
+                                <span class="status status--info">Switzerland - German-speaking cantons</span>
+                            </div>
+                            <div class="card__body">
+                                <div class="phases-timeline" id="phases-timeline">
+                                    <div class="phase-item active">
+                                        <div class="phase-header">
+                                            <h4>PHASE 1: HYPERTROPHY + REHAB</h4>
+                                            <span>25.08 - 06.10 (6 weeks)</span>
+                                        </div>
+                                        <div class="phase-details">
+                                            <div class="phase-focus">Focus: Volume, technique, adductor strengthening</div>
+                                            <div class="phase-intensity">Intensity: 65-80% 1RM</div>
+                                        </div>
+                                        <div class="phase-progress">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: 17%"></div>
+                                            </div>
+                                            <span>Week 1/6 - CURRENT PHASE</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="phase-item">
+                                        <div class="phase-header">
+                                            <h4>PHASE 2: STRENGTH</h4>
+                                            <span>07.10 - 17.11 (6 weeks)</span>
+                                        </div>
+                                        <div class="phase-details">
+                                            <div class="phase-focus">Focus: Strength development, 80-90% 1RM</div>
+                                            <div class="phase-intensity">Power preparation</div>
+                                        </div>
+                                        <div class="phase-status">
+                                            <span class="status status--warning">UPCOMING</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="phase-item">
+                                        <div class="phase-header">
+                                            <h4>PHASE 3: POWER</h4>
+                                            <span>18.11 - 29.12 (6 weeks)</span>
+                                        </div>
+                                        <div class="phase-details">
+                                            <div class="phase-focus">Focus: 90-100% max lifts, competition commands</div>
+                                            <div class="phase-intensity">Peak strength development</div>
+                                        </div>
+                                        <div class="phase-status">
+                                            <span class="status status--warning">UPCOMING</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="phase-item">
+                                        <div class="phase-header">
+                                            <h4>PHASE 4: PEAKING</h4>
+                                            <span>30.12 - 30.03 (12 weeks)</span>
+                                        </div>
+                                        <div class="phase-details">
+                                            <div class="phase-focus">Focus: Competition prep, opener/second/third attempts</div>
+                                            <div class="phase-intensity">Deload and peak for regionals</div>
+                                        </div>
+                                        <div class="phase-status">
+                                            <span class="status status--warning">UPCOMING</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="competition-timeline">
+                                    <h4>Competition Goal:</h4>
+                                    <div class="competition-info">
+                                        <strong>Regional competition in German-speaking cantons of Switzerland</strong><br>
+                                        <span>Drug-free federations | March-May 2026 | 72kg category</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-container">
+                        <div class="chart-container" style="position: relative; height: 400px;">
+                            <canvas id="total-progress-chart"></canvas>
+                        </div>
+                        <div class="chart-container" style="position: relative; height: 400px;">
+                            <canvas id="weekly-volume-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="competition-goals">
+                        <h3>Competition Goals (March 2026)</h3>
+                        <div class="goals-grid">
+                            <div class="goal-item">
+                                <div class="goal-lift">Squat</div>
+                                <div class="goal-current">45kg</div>
+                                <div class="goal-arrow">→</div>
+                                <div class="goal-target">60kg</div>
+                                <div class="goal-increase">+15kg (+33%)</div>
+                            </div>
+                            <div class="goal-item">
+                                <div class="goal-lift">Bench</div>
+                                <div class="goal-current">45kg</div>
+                                <div class="goal-arrow">→</div>
+                                <div class="goal-target">65kg</div>
+                                <div class="goal-increase">+20kg (+44%)</div>
+                            </div>
+                            <div class="goal-item">
+                                <div class="goal-lift">Deadlift</div>
+                                <div class="goal-current">90kg</div>
+                                <div class="goal-arrow">→</div>
+                                <div class="goal-target">120kg</div>
+                                <div class="goal-increase">+30kg (+33%)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Rest Timer Modal -->
+    <div id="rest-timer-modal" class="rest-timer-modal" style="display: none;">
+        <div class="rest-timer-content">
+            <h3>Rest Timer</h3>
+            <div id="rest-timer-display" class="rest-timer-display">03:00</div>
+            <button id="stop-rest-timer" class="btn btn--secondary">Stop</button>
+        </div>
+    </div>
+
+    <!-- Manual Sync Button (Floating) -->
+    <button onclick="manualSync()" class="sync-button" title="Manual Sync">
+        🔄 Sync
+    </button>
+
+    <script src="app-fixed.js"></script>
+</body>
+</html>
