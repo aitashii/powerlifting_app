@@ -1,4 +1,29 @@
-// 🌸🐱 Aitashii Powerlifting Tracker - COMPLETE APPLICATION
+// 🌸🐱 Aitashii Powerlifting Tracker - COMPLETE WITH SYNC
+
+// Firebase Configuration
+const firebaseConfig = {
+  // Replace with your actual Firebase config
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "your-app-id"
+};
+
+// Initialize Firebase (will be done in initializeFirebase function)
+let db = null;
+let auth = null;
+let currentUser = null;
+let isOnline = true;
+
+// Sync status
+let syncStatus = {
+  lastSync: null,
+  pendingChanges: 0,
+  isSyncing: false,
+  syncQueue: []
+};
 
 let appData = {
   // Current Date System - controls all date-dependent functionality
@@ -176,6 +201,16 @@ let currentWeekOffset = 0;
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🌸 Aitashii app loaded, initializing...');
   
+  // Initialize Firebase first
+  initializeFirebase();
+  
+  // Initialize offline detection
+  initializeOfflineDetection();
+  
+  // Initialize auth UI
+  initializeAuth();
+  
+  // Initialize core app features
   initializeNavigation();
   initializeTimer();
   initializePRForm();
@@ -185,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initializeTrainingCalendar();
   setupFatMassCalculation();
   initializeDateControl();
+  initializeSyncButton();
   
   // Wait for charts to initialize after DOM is ready
   setTimeout(() => {
@@ -194,9 +230,431 @@ document.addEventListener('DOMContentLoaded', function() {
   updateAllDateDependencies();
   updateDashboard();
   updateAutoBackupDisplay();
+  updateSyncStatus();
   
   console.log('✅ App fully initialized');
 });
+
+// 🌸 Firebase & Auth Functions
+function initializeFirebase() {
+  try {
+    if (typeof firebase !== 'undefined') {
+      // Initialize Firebase with your config
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      
+      auth = firebase.auth();
+      db = firebase.firestore();
+      
+      // Auth state listener
+      auth.onAuthStateChanged((user) => {
+        currentUser = user;
+        updateAuthUI(user);
+        
+        if (user) {
+          console.log('🌸 User signed in:', user.displayName);
+          loadUserData();
+          startSyncInterval();
+        } else {
+          console.log('🌸 User signed out');
+          stopSyncInterval();
+        }
+      });
+      
+      console.log('✅ Firebase initialized');
+    } else {
+      console.warn('⚠️ Firebase not loaded, running in offline mode');
+    }
+  } catch (error) {
+    console.error('❌ Firebase initialization error:', error);
+  }
+}
+
+function initializeAuth() {
+  const authContainer = document.getElementById('auth-container');
+  if (!authContainer) return;
+  
+  // Create auth buttons
+  const githubBtn = document.createElement('button');
+  githubBtn.id = 'github-login';
+  githubBtn.className = 'btn btn--sm btn--primary auth-btn';
+  githubBtn.innerHTML = '🐙 Login with GitHub';
+  githubBtn.onclick = signInWithGitHub;
+  
+  const googleBtn = document.createElement('button');
+  googleBtn.id = 'google-login';
+  googleBtn.className = 'btn btn--sm btn--secondary auth-btn';
+  googleBtn.innerHTML = '🌸 Login with Google';
+  googleBtn.onclick = signInWithGoogle;
+  
+  authContainer.appendChild(githubBtn);
+  authContainer.appendChild(googleBtn);
+  
+  // Logout button
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.onclick = signOut;
+  }
+}
+
+function updateAuthUI(user) {
+  const authContainer = document.getElementById('auth-container');
+  const userInfo = document.getElementById('user-info');
+  
+  if (user && authContainer && userInfo) {
+    // Hide auth buttons, show user info
+    authContainer.style.display = 'none';
+    userInfo.style.display = 'flex';
+    
+    // Update user info
+    const avatar = document.getElementById('user-avatar');
+    const name = document.getElementById('user-name');
+    
+    if (avatar) avatar.src = user.photoURL || 'https://github.com/identicons/default.png';
+    if (name) name.textContent = user.displayName || user.email;
+  } else if (authContainer && userInfo) {
+    // Show auth buttons, hide user info
+    authContainer.style.display = 'flex';
+    userInfo.style.display = 'none';
+  }
+}
+
+async function signInWithGitHub() {
+  if (!auth) {
+    alert('🌸 Firebase not initialized. Running in offline mode.');
+    return;
+  }
+  
+  try {
+    const provider = new firebase.auth.GithubAuthProvider();
+    provider.addScope('user:email');
+    
+    const result = await auth.signInWithPopup(provider);
+    console.log('🌸 GitHub sign-in successful:', result.user.displayName);
+    
+    // Show success message
+    showNotification('🌸 Successfully signed in with GitHub!', 'success');
+  } catch (error) {
+    console.error('❌ GitHub sign-in error:', error);
+    showNotification('❌ Failed to sign in with GitHub: ' + error.message, 'error');
+  }
+}
+
+async function signInWithGoogle() {
+  if (!auth) {
+    alert('🌸 Firebase not initialized. Running in offline mode.');
+    return;
+  }
+  
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.addScope('profile');
+    provider.addScope('email');
+    
+    const result = await auth.signInWithPopup(provider);
+    console.log('🌸 Google sign-in successful:', result.user.displayName);
+    
+    // Show success message
+    showNotification('🌸 Successfully signed in with Google!', 'success');
+  } catch (error) {
+    console.error('❌ Google sign-in error:', error);
+    showNotification('❌ Failed to sign in with Google: ' + error.message, 'error');
+  }
+}
+
+async function signOut() {
+  if (!auth) return;
+  
+  try {
+    await auth.signOut();
+    console.log('🌸 User signed out');
+    showNotification('🌸 Successfully signed out!', 'info');
+  } catch (error) {
+    console.error('❌ Sign-out error:', error);
+    showNotification('❌ Failed to sign out: ' + error.message, 'error');
+  }
+}
+
+// 🌸 Data Sync Functions
+async function saveToCloud(data, collection = 'userData') {
+  if (!currentUser || !db) {
+    console.log('💾 No user or database, saving locally only');
+    return false;
+  }
+  
+  try {
+    const docRef = db.collection(collection).doc(currentUser.uid);
+    await docRef.set({
+      ...data,
+      lastModified: firebase.firestore.FieldValue.serverTimestamp(),
+      userId: currentUser.uid
+    }, { merge: true });
+    
+    console.log('☁️ Data saved to cloud successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Cloud save error:', error);
+    return false;
+  }
+}
+
+async function loadFromCloud(collection = 'userData') {
+  if (!currentUser || !db) {
+    console.log('💾 No user or database, loading locally only');
+    return null;
+  }
+  
+  try {
+    const docRef = db.collection(collection).doc(currentUser.uid);
+    const doc = await docRef.get();
+    
+    if (doc.exists) {
+      const cloudData = doc.data();
+      console.log('☁️ Data loaded from cloud successfully');
+      return cloudData;
+    } else {
+      console.log('☁️ No cloud data found');
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Cloud load error:', error);
+    return null;
+  }
+}
+
+async function loadUserData() {
+  const cloudData = await loadFromCloud();
+  
+  if (cloudData) {
+    // Merge cloud data with local data
+    appData = { ...appData, ...cloudData };
+    
+    // Update UI with loaded data
+    updateDashboard();
+    updateAllDateDependencies();
+    updateMeasurementsHistory();
+    updateNutritionHistory();
+    updateCharts();
+    
+    syncStatus.lastSync = new Date();
+    updateSyncStatus();
+    
+    console.log('🌸 User data loaded and UI updated');
+  }
+}
+
+async function syncToCloud() {
+  if (syncStatus.isSyncing) return;
+  
+  syncStatus.isSyncing = true;
+  updateSyncStatus();
+  
+  try {
+    const success = await saveToCloud(appData);
+    
+    if (success) {
+      syncStatus.lastSync = new Date();
+      syncStatus.pendingChanges = 0;
+      appData.autoBackup.changesCount = 0; // Reset local backup counter
+      
+      showNotification('☁️ Data synced to cloud!', 'success');
+    } else {
+      syncStatus.pendingChanges++;
+      showNotification('⚠️ Sync failed, saved locally', 'warning');
+    }
+  } catch (error) {
+    console.error('❌ Sync error:', error);
+    syncStatus.pendingChanges++;
+    showNotification('❌ Sync failed: ' + error.message, 'error');
+  } finally {
+    syncStatus.isSyncing = false;
+    updateAutoBackupDisplay();
+    updateSyncStatus();
+  }
+}
+
+let syncInterval = null;
+
+function startSyncInterval() {
+  // Sync every 5 minutes when user is logged in
+  if (syncInterval) clearInterval(syncInterval);
+  
+  syncInterval = setInterval(() => {
+    if (syncStatus.pendingChanges > 0 && isOnline) {
+      syncToCloud();
+    }
+  }, 5 * 60 * 1000); // 5 minutes
+}
+
+function stopSyncInterval() {
+  if (syncInterval) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+  }
+}
+
+// 🌸 Offline Detection
+function initializeOfflineDetection() {
+  isOnline = navigator.onLine;
+  
+  window.addEventListener('online', () => {
+    isOnline = true;
+    console.log('🌸 Back online');
+    updateSyncStatus();
+    
+    // Sync pending changes when back online
+    if (syncStatus.pendingChanges > 0 && currentUser) {
+      setTimeout(() => syncToCloud(), 1000);
+    }
+  });
+  
+  window.addEventListener('offline', () => {
+    isOnline = false;
+    console.log('💾 Gone offline');
+    updateSyncStatus();
+  });
+}
+
+// 🌸 Sync Button
+function initializeSyncButton() {
+  const syncButton = document.getElementById('sync-button');
+  if (!syncButton) return;
+  
+  syncButton.addEventListener('click', () => {
+    if (!currentUser) {
+      showNotification('🌸 Please sign in to sync data', 'info');
+      return;
+    }
+    
+    if (!isOnline) {
+      showNotification('📱 You are offline. Data will sync when connected.', 'warning');
+      return;
+    }
+    
+    syncToCloud();
+  });
+}
+
+function updateSyncStatus() {
+  const syncButton = document.getElementById('sync-button');
+  const syncText = document.getElementById('sync-text');
+  
+  if (!syncButton || !syncText) return;
+  
+  if (!currentUser) {
+    syncText.textContent = '🔒 Sign in';
+    syncButton.className = 'sync-button sync-button--disabled';
+    syncButton.title = 'Sign in to sync data';
+  } else if (!isOnline) {
+    syncText.textContent = '📱 Offline';
+    syncButton.className = 'sync-button sync-button--offline';
+    syncButton.title = 'You are offline';
+  } else if (syncStatus.isSyncing) {
+    syncText.textContent = '⏳ Syncing...';
+    syncButton.className = 'sync-button sync-button--syncing';
+    syncButton.title = 'Syncing data...';
+  } else if (syncStatus.pendingChanges > 0) {
+    syncText.textContent = `☁️ Sync (${syncStatus.pendingChanges})`;
+    syncButton.className = 'sync-button sync-button--pending';
+    syncButton.title = `${syncStatus.pendingChanges} changes pending sync`;
+  } else {
+    const lastSyncText = syncStatus.lastSync 
+      ? ` - Last: ${syncStatus.lastSync.toLocaleTimeString()}`
+      : '';
+    syncText.textContent = '✅ Synced';
+    syncButton.className = 'sync-button sync-button--synced';
+    syncButton.title = `Data is synced${lastSyncText}`;
+  }
+}
+
+// 🌸 Notification System
+function showNotification(message, type = 'info') {
+  // Create notification element if it doesn't exist
+  let notification = document.getElementById('notification');
+  if (!notification) {
+    notification = document.createElement('div');
+    notification.id = 'notification';
+    notification.className = 'notification';
+    document.body.appendChild(notification);
+  }
+  
+  // Set notification content and style
+  notification.textContent = message;
+  notification.className = `notification notification--${type} notification--show`;
+  
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    notification.classList.remove('notification--show');
+  }, 5000);
+}
+
+// 🌸 Enhanced backup system with sync integration
+function incrementBackupCounter() {
+  appData.autoBackup.changesCount++;
+  syncStatus.pendingChanges++;
+  
+  updateAutoBackupDisplay();
+  updateSyncStatus();
+  
+  // Auto-sync if user is logged in and online
+  if (currentUser && isOnline && syncStatus.pendingChanges >= 3) {
+    setTimeout(() => syncToCloud(), 500);
+  } else if (appData.autoBackup.changesCount >= appData.autoBackup.maxChanges) {
+    triggerAutoBackup();
+  }
+}
+
+function updateAutoBackupDisplay() {
+  const backupCounter = document.getElementById('backup-counter');
+  if (backupCounter) {
+    if (currentUser && isOnline) {
+      backupCounter.textContent = `${syncStatus.pendingChanges} pending sync`;
+    } else {
+      backupCounter.textContent = `${appData.autoBackup.changesCount}/${appData.autoBackup.maxChanges} changes`;
+    }
+  }
+}
+
+function triggerAutoBackup() {
+  // Create backup data
+  const backupData = {
+    timestamp: new Date().toISOString(),
+    currentDate: appData.currentDate,
+    data: JSON.parse(JSON.stringify(appData)) // Deep clone
+  };
+  
+  // Download backup file
+  const dataStr = JSON.stringify(backupData, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(dataBlob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `aitashii-powerlifting-backup-${new Date().toISOString().split('T')[0]}.json`;
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  URL.revokeObjectURL(url);
+  
+  // Reset counter
+  appData.autoBackup.changesCount = 0;
+  updateAutoBackupDisplay();
+  
+  console.log('🌸 Auto-backup triggered and downloaded');
+  showNotification('💾 Backup file downloaded!', 'success');
+}
+
+// Update chart functions to include sync
+function updateCharts() {
+  updatePRChart();
+  updateWeightChart();
+  updateBodyFatChart();
+  updateProgressChart();
+  updateVolumeChart();
+}
 
 // Training Calendar Functions
 function initializeTrainingCalendar() {
@@ -521,7 +979,7 @@ function addNewPR() {
   // Sort history by date
   appData.prHistory[exercise].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  // Increment backup counter
+  // Increment backup counter and sync
   incrementBackupCounter();
 
   // Update dashboard and charts
@@ -534,7 +992,7 @@ function addNewPR() {
   document.getElementById('pr-date').value = appData.currentDate;
   document.getElementById('estimated-1rm-display').textContent = '-';
 
-  alert(`🌸 New ${repCategory} PR added! ${exercise.toUpperCase()}: ${weight}kg x${reps} (Est. 1RM: ${estimated1RM}kg)\n\nAll training weights have been updated.`);
+  showNotification(`🌸 New ${repCategory} PR added! ${exercise.toUpperCase()}: ${weight}kg x${reps} (Est. 1RM: ${estimated1RM}kg)`, 'success');
 }
 
 // Enhanced Measurements with proper saving and history
@@ -611,7 +1069,7 @@ function addMeasurement() {
     bodyWater: bodyWater
   };
 
-  // Increment backup counter
+  // Increment backup counter and sync
   incrementBackupCounter();
 
   // Update charts, dashboard, and history
@@ -625,7 +1083,7 @@ function addMeasurement() {
   document.getElementById('measurements-form').reset();
   document.getElementById('measurement-date').value = appData.currentDate;
 
-  alert('🌸 Measurements saved and body composition updated!');
+  showNotification('🌸 Measurements saved and body composition updated!', 'success');
 }
 
 function updateMeasurementsHistory() {
@@ -698,7 +1156,7 @@ function addNutritionEntry() {
   // Sort by date
   appData.nutritionEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  // Increment backup counter
+  // Increment backup counter and sync
   incrementBackupCounter();
 
   // Update display
@@ -708,7 +1166,7 @@ function addNutritionEntry() {
   document.getElementById('nutrition-form').reset();
   document.getElementById('nutrition-date').value = appData.currentDate;
 
-  alert('🌸 Nutrition entry added!');
+  showNotification('🌸 Nutrition entry added!', 'success');
 }
 
 function addShakeToLog() {
@@ -739,13 +1197,13 @@ function addShakeToLog() {
   // Sort by date
   appData.nutritionEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  // Increment backup counter
+  // Increment backup counter and sync
   incrementBackupCounter();
 
   // Update display
   updateNutritionHistory();
 
-  alert('🌸 Shake added to today\'s nutrition log!\n\n278 kcal, 53.5g protein counted.');
+  showNotification('🌸 Shake added to today\'s nutrition log! 278 kcal, 53.5g protein counted.', 'success');
 }
 
 function updateNutritionHistory() {
@@ -806,7 +1264,7 @@ function startRestTimer(seconds) {
       if ('vibrate' in navigator) {
         navigator.vibrate([200, 100, 200]);
       }
-      alert('⏰ Rest time completed!');
+      showNotification('⏰ Rest time completed!', 'info');
     }
   }, 1000);
   
@@ -859,7 +1317,7 @@ function initializeDateControl() {
 function updateCurrentDate(newDateString) {
   appData.currentDate = newDateString;
   
-  // Increment backup counter and trigger backup if needed
+  // Increment backup counter and trigger sync
   incrementBackupCounter();
   
   // Update all date-dependent systems
@@ -1289,53 +1747,6 @@ function updateWeeklyProgressDisplay() {
   });
 }
 
-// Auto-backup system
-function incrementBackupCounter() {
-  appData.autoBackup.changesCount++;
-  updateAutoBackupDisplay();
-  
-  if (appData.autoBackup.changesCount >= appData.autoBackup.maxChanges) {
-    triggerAutoBackup();
-  }
-}
-
-function updateAutoBackupDisplay() {
-  const backupCounter = document.getElementById('backup-counter');
-  if (backupCounter) {
-    backupCounter.textContent = `${appData.autoBackup.changesCount}/${appData.autoBackup.maxChanges} changes`;
-  }
-}
-
-function triggerAutoBackup() {
-  // Create backup data
-  const backupData = {
-    timestamp: new Date().toISOString(),
-    currentDate: appData.currentDate,
-    data: JSON.parse(JSON.stringify(appData)) // Deep clone
-  };
-  
-  // Download backup file
-  const dataStr = JSON.stringify(backupData, null, 2);
-  const dataBlob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(dataBlob);
-  
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `aitashii-powerlifting-backup-${new Date().toISOString().split('T')[0]}.json`;
-  
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  
-  URL.revokeObjectURL(url);
-  
-  // Reset counter
-  appData.autoBackup.changesCount = 0;
-  updateAutoBackupDisplay();
-  
-  console.log('🌸 Auto-backup triggered and downloaded');
-}
-
 // Navigation Functions
 function initializeNavigation() {
   console.log('Initializing navigation...');
@@ -1436,13 +1847,13 @@ function initializeCycleTracker() {
     if (periodDate) {
       appData.menstrualCycle.lastPeriod = periodDate;
       
-      // Increment backup counter
+      // Increment backup counter and sync
       incrementBackupCounter();
       
       updateMenstrualCycleCalculations();
       updateDashboard();
       
-      alert('🌸 Cycle updated!');
+      showNotification('🌸 Cycle updated!', 'success');
     }
   });
 }
@@ -2050,4 +2461,4 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-console.log('🌸🐱 Aitashii Powerlifting Tracker loaded successfully!');
+console.log('🌸🐱 Aitashii Powerlifting Tracker with SYNC loaded successfully!');
