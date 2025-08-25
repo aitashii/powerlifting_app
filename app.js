@@ -452,7 +452,124 @@ function loadDataFromStorage() {
     console.error('❌ Error loading data:', error);
   }
 }
+// ==== MOBILE SYNC HELPER ====
 
+function addMobileSyncButton() {
+  // Check if we're on mobile
+  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    console.log('📱 Mobile detected - adding sync helpers');
+    
+    // Add manual sync button to header
+    const headerActions = document.querySelector('.header-actions');
+    if (headerActions && !document.getElementById('mobile-sync-btn')) {
+      const syncBtn = document.createElement('button');
+      syncBtn.id = 'mobile-sync-btn';
+      syncBtn.className = 'btn btn--small';
+      syncBtn.innerHTML = '🔄 Sync';
+      syncBtn.onclick = forceMobileSync;
+      headerActions.insertBefore(syncBtn, headerActions.firstChild);
+    }
+    
+    // Add sync status to dashboard
+    addSyncStatusIndicator();
+    
+    // Auto-sync every 2 minutes on mobile
+    setInterval(forceMobileSync, 120000); // 2 minutes
+  }
+}
+
+function forceMobileSync() {
+  if (appData.syncStatus.user) {
+    console.log('📱 Force mobile sync...');
+    showSaveIndicator('🔄 Synchronizacja...', '#3b82f6');
+    
+    // Force upload current data
+    uploadToFirebase(appData.syncStatus.user.uid);
+    
+    // Force refresh data from Firebase
+    setTimeout(() => {
+      refreshFromFirebase();
+    }, 2000);
+  } else {
+    showSaveIndicator('❌ Nie zalogowano', '#ef4444');
+  }
+}
+
+function refreshFromFirebase() {
+  if (!window.firebaseDb || !appData.syncStatus.user) return;
+  
+  const userDocRef = window.firebaseDoc(window.firebaseDb, 'users', appData.syncStatus.user.uid, 'data', 'appData');
+  
+  window.firebaseGetDoc(userDocRef).then((doc) => {
+    if (doc.exists()) {
+      const cloudData = doc.data();
+      console.log('📱 Manual refresh from Firebase');
+      
+      if (cloudData.lastUpdated && cloudData.lastUpdated > appData.lastUpdated) {
+        appData = { ...appData, ...cloudData };
+        
+        updateDashboard();
+        updateAllDateDependencies();
+        updateCharts();
+        saveDataToStorage();
+        
+        showSaveIndicator('✅ Zsynchronizowano!', '#22c55e');
+        updateSyncStatusIndicator('✅ Sync OK', '#22c55e');
+      } else {
+        showSaveIndicator('ℹ️ Dane aktualne', '#3b82f6');
+        updateSyncStatusIndicator('ℹ️ Dane aktualne', '#3b82f6');
+      }
+    }
+  }).catch((error) => {
+    console.error('❌ Manual sync failed:', error);
+    showSaveIndicator('❌ Błąd sync', '#ef4444');
+    updateSyncStatusIndicator('❌ Błąd sync', '#ef4444');
+  });
+}
+
+function addSyncStatusIndicator() {
+  const dashboard = document.getElementById('dashboard');
+  if (dashboard && !document.getElementById('mobile-sync-status')) {
+    const syncStatus = document.createElement('div');
+    syncStatus.id = 'mobile-sync-status';
+    syncStatus.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #6b7280;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 1000;
+    `;
+    syncStatus.textContent = '📱 Mobile Mode';
+    document.body.appendChild(syncStatus);
+  }
+}
+
+function updateSyncStatusIndicator(message, color) {
+  const indicator = document.getElementById('mobile-sync-status');
+  if (indicator) {
+    indicator.textContent = message;
+    indicator.style.backgroundColor = color;
+    
+    setTimeout(() => {
+      indicator.style.backgroundColor = '#6b7280';
+      indicator.textContent = '📱 Mobile Mode';
+    }, 3000);
+  }
+}
+
+// Call this in the initialization
+document.addEventListener('DOMContentLoaded', function() {
+  // Add after existing DOMContentLoaded code
+  setTimeout(() => {
+    addMobileSyncButton();
+  }, 2000);
+});
 function saveDataToStorage() {
   try {
     appData.lastUpdated = new Date().toISOString();
