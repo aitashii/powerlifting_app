@@ -162,6 +162,7 @@ let restTimer = {
 };
 
 // === ZEGAR ZURICH (Europe/Zurich) ===
+// === ZEGAR ZURICH (Europe/Zurich) ===
 function startZurichClock() {
   const dateFmt = new Intl.DateTimeFormat('pl-PL', {
     timeZone: 'Europe/Zurich',
@@ -175,29 +176,35 @@ function startZurichClock() {
     timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit'
   });
 
-function tick() {
-  try {
-    const now = new Date();
-    const nav = document.getElementById('nav-date');
-    if (nav) nav.textContent = `${dateFmt.format(now)} • ${timeFmt.format(now)} (Zürich)`;
+  function tick() {
+    try {
+      const now = new Date();
+      const nav = document.getElementById('nav-date');
+      if (nav) nav.textContent = `${dateFmt.format(now)} • ${timeFmt.format(now)} (Zürich)`;
 
-    // Utrzymuj currentDate w formacie YYYY-MM-DD (Europe/Zurich)
-    const ymd = dateIsoFmt.format(now); // np. 2025-08-25
-    if (window.appData && window.appData.currentDate !== ymd) {
-      window.appData.currentDate = ymd;
-      // Ważne: u Ciebie ta funkcja nazywa się updateAllSections
-      if (typeof updateAllSections === 'function') {
-        updateAllSections();
+      // Aktualizuj currentDate tylko przy realnej zmianie dnia w strefie Zurich:
+      const ymd = dateIsoFmt.format(now); // np. 2025-08-25
+      if (window.appData && window.appData.currentDate !== ymd) {
+        window.appData.currentDate = ymd;
+        if (typeof updateAllSections === 'function') {
+          updateAllSections();
+        }
       }
+    } catch (e) {
+      console.error('Clock tick error:', e);
     }
-  } catch (e) {
-    console.error('Clock tick error:', e);
   }
+
+  // Pierwszy strzał natychmiast:
+  tick();
+  // Wyrównanie do granicy sekundy, potem idealne 1000 ms:
+  const delay = 1000 - (Date.now() % 1000);
+  setTimeout(() => {
+    tick();
+    setInterval(tick, 1000);
+  }, delay);
 }
 
-  tick();
-  setInterval(tick, 1000);
-}
 
 
 // Initialize Application
