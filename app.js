@@ -1,5 +1,109 @@
 // 🌸🐱 6xSBD PWA Training Tracker - FIXED HAMBURGER MENU
 // Fixed menu + all functionality working
+// Edge Mobile Compatibility Fix - Add to top of app.js
+
+// Detect Edge Mobile and apply fixes
+const isEdgeMobile = /Edge\/\d+/i.test(navigator.userAgent) && /Mobile/i.test(navigator.userAgent);
+const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+if (isEdgeMobile) {
+  console.log('🔧 Edge Mobile detected - applying compatibility fixes');
+  
+  // Fix touch events for Edge Mobile
+  document.addEventListener('DOMContentLoaded', function() {
+    // Force click events instead of touch for hamburger
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    if (hamburgerBtn) {
+      // Remove any existing listeners
+      hamburgerBtn.onclick = null;
+      
+      // Add both click and touchstart for Edge Mobile
+      hamburgerBtn.addEventListener('click', handleHamburgerClick, { passive: false });
+      hamburgerBtn.addEventListener('touchstart', handleHamburgerClick, { passive: false });
+    }
+  });
+  
+  function handleHamburgerClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🍔 Hamburger clicked on Edge Mobile');
+    
+    const menuOverlay = document.getElementById('menu-overlay');
+    const slidingMenu = document.getElementById('sliding-menu');
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    
+    if (slidingMenu && menuOverlay) {
+      const isActive = slidingMenu.classList.contains('active');
+      
+      if (isActive) {
+        // Close menu
+        hamburgerBtn.classList.remove('active');
+        menuOverlay.classList.remove('active');
+        slidingMenu.classList.remove('active');
+        document.body.style.overflow = '';
+      } else {
+        // Open menu
+        hamburgerBtn.classList.add('active');
+        menuOverlay.classList.add('active');
+        slidingMenu.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+  }
+}
+
+// Also add fallback button if hamburger fails
+if (isMobile) {
+  window.addEventListener('load', function() {
+    setTimeout(() => {
+      const hamburgerBtn = document.getElementById('hamburger-btn');
+      if (hamburgerBtn && !hamburgerBtn.onclick) {
+        console.log('⚠️ Adding fallback menu button');
+        
+        // Create fallback menu button
+        const fallbackBtn = document.createElement('button');
+        fallbackBtn.innerHTML = '☰ MENU';
+        fallbackBtn.style.cssText = `
+          position: fixed;
+          top: 10px;
+          left: 10px;
+          z-index: 9999;
+          background: var(--color-primary, #D4A5A5);
+          color: white;
+          border: none;
+          padding: 12px 16px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: bold;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        `;
+        
+        fallbackBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const slidingMenu = document.getElementById('sliding-menu');
+          const menuOverlay = document.getElementById('menu-overlay');
+          
+          if (slidingMenu && menuOverlay) {
+            const isActive = slidingMenu.classList.contains('active');
+            
+            if (isActive) {
+              menuOverlay.classList.remove('active');
+              slidingMenu.classList.remove('active');
+              document.body.style.overflow = '';
+            } else {
+              menuOverlay.classList.add('active');
+              slidingMenu.classList.add('active');
+              document.body.style.overflow = 'hidden';
+            }
+          }
+        });
+        
+        document.body.appendChild(fallbackBtn);
+      }
+    }, 2000);
+  });
+}
 
 let appData = {
   // PWA version tracking
