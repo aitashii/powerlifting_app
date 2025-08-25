@@ -1,4 +1,4 @@
-// 🌸🐱 6xSBD PWA Training Tracker - FIREBASE ENABLED VERSION
+// 🌸🐱 Aitashii Powerlifting Tracker - FIREBASE ENABLED VERSION
 // Real-time sync between devices with GitHub authentication
 
 let appData = {
@@ -147,7 +147,7 @@ let firebaseUnsubscribe = null;
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🌸 6xSBD PWA with Firebase initializing...');
+  console.log('🌸 Aitashii Powerlifting Tracker with Firebase initializing...');
   
   try {
     // Initialize Firebase auth first
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
       updateDashboard();
       updateAllDateDependencies();
       
-      console.log('✅ 6xSBD PWA with Firebase ready!');
+      console.log('✅ Aitashii Powerlifting Tracker with Firebase ready!');
     }, 1000); // Wait for Firebase to be available
     
   } catch (error) {
@@ -355,7 +355,7 @@ function updateSyncStatus(message, isOnline) {
 
 function loadDataFromStorage() {
   try {
-    const savedData = localStorage.getItem('6xsbd-data');
+    const savedData = localStorage.getItem('aitashii-powerlifting-data');
     if (savedData) {
       const parsed = JSON.parse(savedData);
       appData = { ...appData, ...parsed };
@@ -370,7 +370,7 @@ function loadDataFromStorage() {
 function saveDataToStorage() {
   try {
     appData.lastUpdated = new Date().toISOString();
-    localStorage.setItem('6xsbd-data', JSON.stringify(appData));
+    localStorage.setItem('aitashii-powerlifting-data', JSON.stringify(appData));
     console.log('💾 Data saved to localStorage');
     
     // Also save to Firebase if user is logged in
@@ -802,10 +802,10 @@ function updateDailyWorkout() {
     
     if (workoutTitle) workoutTitle.textContent = `💪 Trening na ${dayName}`;
     if (workoutStatus) {
-      workoutStatus.textContent = 'Dzień treningowy - 6xSBD';
+      workoutStatus.textContent = 'Dzień treningowy - Aitashii Method';
       workoutStatus.className = 'status status--success';
     }
-    if (dayType) dayType.textContent = 'Dzień treningowy (6xSBD)';
+    if (dayType) dayType.textContent = 'Dzień treningowy (Aitashii Method)';
     
     if (currentPhase) {
       const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * currentPhase.exercises.squat.intensity);
@@ -942,7 +942,7 @@ function updateDetailedWorkout(currentPhase, isTrainingDay, dayName) {
         
         <div class="training-notes">
           <h4>📝 Notatki</h4>
-          <p>💡 <strong>Tip:</strong> Bazowane na metodach Agaty Sitko</p>
+          <p>💡 <strong>Tip:</strong> Bazowane na metodologii Aitashii</p>
           <p>🎪 Dostosuj ciężary do swojego samopoczucia</p>
           <p>🌸 Pamiętaj o rozgrzewce i cool-down!</p>
           <p>🔥 <strong>Firebase:</strong> Dane synchronizują się automatycznie!</p>
@@ -1214,6 +1214,7 @@ function exportForTrainer() {
   try {
     const trainerData = {
       exportType: 'trainer-analysis',
+      appName: 'Aitashii Powerlifting Tracker',
       version: appData.version,
       timestamp: new Date().toISOString(),
       currentDate: appData.currentDate,
@@ -1227,7 +1228,7 @@ function exportForTrainer() {
       syncStatus: appData.syncStatus
     };
     
-    const fileName = `6xSBD-trainer-export-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-')}.json`;
+    const fileName = `Aitashii-trainer-export-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-')}.json`;
     const jsonString = JSON.stringify(trainerData, null, 2);
     downloadJsonFile(jsonString, fileName);
     
@@ -1242,6 +1243,7 @@ function exportForTrainer() {
 function createBackupData() {
   return {
     version: "2.0",
+    appName: "Aitashii Powerlifting Tracker",
     backupType: "complete",
     timestamp: new Date().toISOString(),
     syncEnabled: !!appData.syncStatus.user,
@@ -1252,7 +1254,7 @@ function createBackupData() {
 function generateBackupFileName(type = 'auto') {
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 16).replace(/[T:]/g, '-');
-  return `6xSBD-backup-${type}-${dateStr}.json`;
+  return `Aitashii-backup-${type}-${dateStr}.json`;
 }
 
 function downloadBackupFile(data, fileName) {
@@ -1322,7 +1324,7 @@ function handleFileRestore(event) {
   const file = event.target.files[0];
   if (!file) return;
   
-  if (!file.name.includes('6xSBD-backup') || !file.name.endsWith('.json')) {
+  if ((!file.name.includes('Aitashii-backup') && !file.name.includes('6xSBD-backup')) || !file.name.endsWith('.json')) {
     showSaveIndicator('❌ Błędny plik', '#ef4444');
     return;
   }
@@ -1736,5 +1738,5 @@ window.addEventListener('load', function() {
   
   updateAutoBackupUI();
   
-  console.log('🎉 6xSBD PWA with Firebase FULLY LOADED!');
+  console.log('🎉 Aitashii Powerlifting Tracker with Firebase FULLY LOADED!');
 });
