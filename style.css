@@ -738,7 +738,7 @@ select.form-control {
 }
 
 /* END PERPLEXITY DESIGN SYSTEM */
-/* 🌸🐱 AITASHII POWERLIFTING TRACKER - FIXED STYLES */
+/* 🌸🐱 AITASHII POWERLIFTING TRACKER - COMPLETE STYLES */
 
 :root {
   /* Primitive Color Tokens */
@@ -861,6 +861,10 @@ select.form-control {
   --space-20: 20px;
   --space-24: 24px;
   --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-56: 56px;
+  --space-64: 64px;
 
   /* Border Radius */
   --radius-sm: 6px;
@@ -875,7 +879,7 @@ select.form-control {
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.04), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
   --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.15), inset 0 -1px 0 rgba(0, 0, 0, 0.03);
 
   /* Animation */
@@ -950,15 +954,15 @@ select.form-control {
   --color-gray-300-rgb: 167, 169, 169;
   --color-gray-200-rgb: 245, 245, 245;
 
-  /* Colorful background palette - Dark Mode */
-  --color-bg-1: rgba(29, 78, 216, 0.15); /* Dark blue */
-  --color-bg-2: rgba(180, 83, 9, 0.15); /* Dark yellow */
-  --color-bg-3: rgba(21, 128, 61, 0.15); /* Dark green */
-  --color-bg-4: rgba(185, 28, 28, 0.15); /* Dark red */
-  --color-bg-5: rgba(107, 33, 168, 0.15); /* Dark purple */
-  --color-bg-6: rgba(194, 65, 12, 0.15); /* Dark orange */
-  --color-bg-7: rgba(190, 24, 93, 0.15); /* Dark pink */
-  --color-bg-8: rgba(8, 145, 178, 0.15); /* Dark cyan */
+  /* Background color tokens (Dark Mode) */
+  --color-bg-1: rgba(29, 78, 216, 0.15);
+  --color-bg-2: rgba(180, 83, 9, 0.15);
+  --color-bg-3: rgba(21, 128, 61, 0.15);
+  --color-bg-4: rgba(185, 28, 28, 0.15);
+  --color-bg-5: rgba(107, 33, 168, 0.15);
+  --color-bg-6: rgba(194, 65, 12, 0.15);
+  --color-bg-7: rgba(190, 24, 93, 0.15);
+  --color-bg-8: rgba(8, 145, 178, 0.15);
   
   /* Semantic Color Tokens (Dark Mode) */
   --color-background: var(--color-charcoal-700);
@@ -978,19 +982,10 @@ select.form-control {
   --color-info: var(--color-gray-300);
   --color-focus-ring: rgba(var(--color-teal-300-rgb), 0.4);
   --color-btn-primary-text: var(--color-slate-900);
-  --color-card-border: rgba(var(--color-gray-400-rgb), 0.15);
+  --color-card-border: rgba(var(--color-gray-400-rgb), 0.2);
   --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
   --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.15);
-  --color-border-secondary: rgba(var(--color-gray-400-rgb), 0.2);
   --color-select-caret: rgba(var(--color-gray-200-rgb), 0.8);
-
-  /* Common style patterns - updated for dark mode */
-  --focus-ring: 0 0 0 3px var(--color-focus-ring);
-  --focus-outline: 2px solid var(--color-primary);
-  --status-bg-opacity: 0.15;
-  --status-border-opacity: 0.25;
-  --select-caret-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23134252' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  --select-caret-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 
   /* RGB versions for dark mode */
   --color-success-rgb: var(--color-teal-300-rgb);
@@ -1025,6 +1020,7 @@ select.form-control {
   --color-warning: var(--color-orange-500);
   --color-info: var(--color-slate-500);
   --color-focus-ring: rgba(var(--color-teal-500-rgb), 0.4);
+  --color-select-caret: rgba(var(--color-slate-900-rgb), 0.8);
 
   /* RGB versions for light mode */
   --color-success-rgb: var(--color-teal-500-rgb);
@@ -1156,23 +1152,6 @@ a:hover {
   color: var(--color-btn-primary-text);
   border-color: var(--color-primary);
   box-shadow: var(--shadow-sm);
-}
-
-.nav__auth {
-  display: flex;
-  align-items: center;
-  gap: var(--space-16);
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: var(--space-12);
-}
-
-.user-avatar {
-  border-radius: var(--radius-full);
-  border: 2px solid var(--color-border);
 }
 
 .nav__backup .backup-indicator {
@@ -1384,27 +1363,27 @@ select.form-control {
 }
 
 .status--success {
-  background-color: rgba(var(--color-success-rgb), 0.15);
+  background-color: rgba(var(--color-success-rgb), var(--status-bg-opacity));
   color: var(--color-success);
-  border: 1px solid rgba(var(--color-success-rgb), 0.25);
+  border: 1px solid rgba(var(--color-success-rgb), var(--status-border-opacity));
 }
 
 .status--error {
-  background-color: rgba(var(--color-error-rgb), 0.15);
+  background-color: rgba(var(--color-error-rgb), var(--status-bg-opacity));
   color: var(--color-error);
-  border: 1px solid rgba(var(--color-error-rgb), 0.25);
+  border: 1px solid rgba(var(--color-error-rgb), var(--status-border-opacity));
 }
 
 .status--warning {
-  background-color: rgba(var(--color-warning-rgb), 0.15);
+  background-color: rgba(var(--color-warning-rgb), var(--status-bg-opacity));
   color: var(--color-warning);
-  border: 1px solid rgba(var(--color-warning-rgb), 0.25);
+  border: 1px solid rgba(var(--color-warning-rgb), var(--status-border-opacity));
 }
 
 .status--info {
-  background-color: rgba(var(--color-info-rgb), 0.15);
+  background-color: rgba(var(--color-info-rgb), var(--status-bg-opacity));
   color: var(--color-info);
-  border: 1px solid rgba(var(--color-info-rgb), 0.25);
+  border: 1px solid rgba(var(--color-info-rgb), var(--status-border-opacity));
 }
 
 /* 🌸 Date Control Card */
@@ -1530,6 +1509,86 @@ select.form-control {
   color: var(--color-text-secondary);
 }
 
+/* 🌸 PR Categories by Reps */
+.pr-categories {
+  margin-bottom: var(--space-32);
+}
+
+.pr-tabs {
+  display: flex;
+  gap: var(--space-8);
+  margin-bottom: var(--space-16);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.pr-tab {
+  padding: var(--space-8) var(--space-16);
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+  border-bottom: 2px solid transparent;
+}
+
+.pr-tab:hover {
+  color: var(--color-text);
+  border-bottom-color: var(--color-primary);
+}
+
+.pr-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.pr-rep-categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-16);
+}
+
+.pr-category {
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-16);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.pr-category:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.pr-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-12);
+}
+
+.pr-category-header h4 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  color: var(--color-text);
+}
+
+.pr-category-details {
+  text-align: center;
+}
+
+.pr-category .pr-weight {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-4);
+}
+
+.pr-empty {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  padding: var(--space-16) 0;
+}
+
 /* 🌸 Body Composition */
 .body-comp-card .card__body {
   display: flex;
@@ -1603,6 +1662,198 @@ select.form-control {
   color: var(--color-text-secondary);
   margin-top: var(--space-4);
   display: block;
+}
+
+/* 🌸 Training Calendar */
+.training-calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-24);
+  padding: var(--space-16);
+  background: linear-gradient(135deg, var(--color-bg-1), var(--color-bg-3));
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-card-border);
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+}
+
+#current-week-display {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  min-width: 200px;
+  text-align: center;
+}
+
+.training-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-12);
+  margin-bottom: var(--space-32);
+}
+
+.training-day {
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-16);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.training-day:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+}
+
+.training-day.today {
+  border: 2px solid var(--color-primary);
+  background: linear-gradient(135deg, var(--color-bg-1), var(--color-bg-7));
+}
+
+.day-header {
+  margin-bottom: var(--space-8);
+}
+
+.day-name {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.day-number {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin-top: var(--space-4);
+}
+
+.workout-type {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  padding: var(--space-6) var(--space-8);
+  border-radius: var(--radius-sm);
+}
+
+.workout-type.training {
+  background: var(--color-bg-3);
+  color: var(--color-success);
+}
+
+.workout-type.rest {
+  background: var(--color-bg-2);
+  color: var(--color-warning);
+}
+
+.training-phases-overview {
+  margin-bottom: var(--space-32);
+}
+
+.phases-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-16);
+}
+
+.phase-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-16);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.phase-card.active {
+  border-color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-bg-1), var(--color-bg-3));
+  box-shadow: var(--shadow-md);
+}
+
+.phase-card h4 {
+  margin-bottom: var(--space-8);
+  color: var(--color-text);
+}
+
+.phase-card p {
+  margin-bottom: var(--space-8);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.phase-intensity {
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.selected-workout-details {
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-24);
+  margin-top: var(--space-24);
+}
+
+.workout-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.workout-details .phase-info {
+  display: flex;
+  gap: var(--space-16);
+  align-items: center;
+  margin-bottom: var(--space-16);
+}
+
+.exercise-preview, .accessories-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.exercise-line, .accessory-line {
+  padding: var(--space-8) var(--space-12);
+  background: var(--color-bg-1);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-primary);
+}
+
+.rest-day-content {
+  text-align: center;
+  padding: var(--space-24);
+}
+
+.recovery-activities {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  margin-top: var(--space-16);
+}
+
+.activity-item {
+  padding: var(--space-12);
+  background: var(--color-bg-2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-warning);
 }
 
 /* 🌸 Workout Preview */
@@ -1809,7 +2060,7 @@ select.form-control {
 .workout-exercises {
   display: flex;
   flex-direction: column;
-  gap: var(--space-32);
+  gap: var(--space-40);
 }
 
 .exercise-group h3 {
@@ -2011,6 +2262,10 @@ select.form-control {
   font-family: var(--font-family-mono);
 }
 
+.pr-history {
+  margin-top: var(--space-32);
+}
+
 /* 🌸 Charts */
 .chart-container {
   background: var(--color-surface);
@@ -2044,6 +2299,46 @@ select.form-control {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--space-16);
   margin-bottom: var(--space-16);
+}
+
+.measurements-history {
+  margin-top: var(--space-24);
+}
+
+.measurements-table-container {
+  overflow-x: auto;
+}
+
+.measurements-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  border-radius: var(--radius-base);
+  overflow: hidden;
+}
+
+.measurements-table th,
+.measurements-table td {
+  padding: var(--space-12);
+  text-align: left;
+  border-bottom: 1px solid var(--color-card-border-inner);
+}
+
+.measurements-table th {
+  background: var(--color-bg-1);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+.measurements-table td {
+  color: var(--color-text);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+}
+
+.measurements-table tr:hover {
+  background: var(--color-bg-1);
 }
 
 /* 🌸 Cycle Tracking */
@@ -2138,7 +2433,25 @@ select.form-control {
   box-shadow: 0 0 0 2px rgba(var(--color-teal-500-rgb), 0.5);
 }
 
+.calendar-day-label {
+  background: var(--color-bg-2);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* 🌸 Nutrition Section */
+.nutrition-entry {
+  margin-bottom: var(--space-24);
+}
+
+.nutrition-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-16);
+}
+
 .nutrition-targets {
   margin-bottom: var(--space-24);
 }
@@ -2268,6 +2581,56 @@ select.form-control {
   font-size: var(--font-size-xs);
   opacity: 0.9;
   font-family: var(--font-family-mono);
+}
+
+.nutrition-history {
+  margin-top: var(--space-24);
+}
+
+.nutrition-entry-item {
+  padding: var(--space-12);
+  background: var(--color-surface);
+  border: 1px solid var(--color-card-border);
+  border-radius: var(--radius-base);
+  margin-bottom: var(--space-8);
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.nutrition-entry-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.entry-calories {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+.entry-macros {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono);
+  margin-bottom: var(--space-4);
+}
+
+.entry-notes {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-style: italic;
+}
+
+.no-entries {
+  text-align: center;
+  padding: var(--space-24);
+  color: var(--color-text-secondary);
+  font-style: italic;
 }
 
 /* 🌸 Progress Section */
@@ -2459,28 +2822,6 @@ select.form-control {
   font-size: var(--font-size-sm);
 }
 
-/* 🌸 Floating Sync Button */
-.sync-button {
-  position: fixed;
-  bottom: var(--space-24);
-  right: var(--space-24);
-  background: linear-gradient(135deg, var(--color-primary), var(--color-teal-600));
-  color: var(--color-btn-primary-text);
-  border: none;
-  border-radius: var(--radius-full);
-  padding: var(--space-12) var(--space-16);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  box-shadow: var(--shadow-lg);
-  transition: all var(--duration-normal) var(--ease-standard);
-  z-index: 100;
-}
-
-.sync-button:hover {
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: var(--shadow-xl);
-}
-
 /* 🌸 Animations */
 @keyframes pulse {
   0%, 100% { 
@@ -2536,13 +2877,6 @@ select.form-control {
     flex: 1;
     text-align: center;
     min-width: 100px;
-  }
-
-  .nav__auth {
-    flex-direction: column;
-    gap: var(--space-8);
-    width: 100%;
-    align-items: center;
   }
 
   .summary-grid {
@@ -2601,19 +2935,43 @@ select.form-control {
     font-size: var(--font-size-xs);
   }
 
-  .sync-button {
-    bottom: var(--space-16);
-    right: var(--space-16);
-    padding: var(--space-10) var(--space-12);
-    font-size: var(--font-size-sm);
-  }
-
   #timer-display {
     font-size: var(--font-size-xl);
   }
 
   .rest-timer-display {
     font-size: var(--font-size-3xl);
+  }
+
+  .training-calendar {
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--space-8);
+  }
+
+  .training-day {
+    min-height: 100px;
+    padding: var(--space-12);
+  }
+
+  .calendar-nav {
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  #current-week-display {
+    min-width: auto;
+  }
+
+  .pr-rep-categories {
+    grid-template-columns: 1fr;
+  }
+
+  .nutrition-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .phases-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -2679,11 +3037,52 @@ select.form-control {
   .summary-grid {
     gap: var(--space-16);
   }
+
+  .training-calendar {
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--space-4);
+  }
+
+  .training-day {
+    min-height: 80px;
+    padding: var(--space-8);
+  }
+
+  .day-number {
+    font-size: var(--font-size-lg);
+  }
+
+  .workout-type {
+    font-size: var(--font-size-xs);
+  }
+
+  .pr-tabs {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .pr-tab {
+    width: 100%;
+    text-align: center;
+  }
+
+  .nutrition-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .measurements-table {
+    font-size: var(--font-size-xs);
+  }
+
+  .measurements-table th,
+  .measurements-table td {
+    padding: var(--space-8);
+  }
 }
 
 /* 🌸 Print styles */
 @media print {
-  .nav, .sync-button, .rest-timer-modal {
+  .nav, .rest-timer-modal {
     display: none !important;
   }
   
@@ -2705,4 +3104,10 @@ select.form-control {
     --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
+}
+
+@font-face {
+  font-family: 'FKGroteskNeue';
+  src: url('https://r2cdn.perplexity.ai/fonts/FKGroteskNeue.woff2')
+    format('woff2');
 }
