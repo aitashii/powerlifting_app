@@ -1,121 +1,23 @@
-// 🌸🐱 6xSBD PWA Training Tracker - COMPLETE FIXED VERSION
-// Fixed: Chrome Windows, Treningi tab, Live saving, Notifications
-// Edge Mobile Compatibility Fix - Add to top of app.js
+// 🌸🐱 6xSBD PWA Training Tracker - FIREBASE ENABLED VERSION
+// Real-time sync between devices with GitHub authentication
 
-// Detect Edge Mobile and apply fixes
-const isEdgeMobile = /Edge\/\d+/i.test(navigator.userAgent) && /Mobile/i.test(navigator.userAgent);
-const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-if (isEdgeMobile) {
-  console.log('🔧 Edge Mobile detected - applying compatibility fixes');
-  
-  // Fix touch events for Edge Mobile
-  document.addEventListener('DOMContentLoaded', function() {
-    // Force click events instead of touch for hamburger
-    const hamburgerBtn = document.getElementById('hamburger-btn');
-    if (hamburgerBtn) {
-      // Remove any existing listeners
-      hamburgerBtn.onclick = null;
-      
-      // Add both click and touchstart for Edge Mobile
-      hamburgerBtn.addEventListener('click', handleHamburgerClick, { passive: false });
-      hamburgerBtn.addEventListener('touchstart', handleHamburgerClick, { passive: false });
-    }
-  });
-  
-  function handleHamburgerClick(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('🍔 Hamburger clicked on Edge Mobile');
-    
-    const menuOverlay = document.getElementById('menu-overlay');
-    const slidingMenu = document.getElementById('sliding-menu');
-    const hamburgerBtn = document.getElementById('hamburger-btn');
-    
-    if (slidingMenu && menuOverlay) {
-      const isActive = slidingMenu.classList.contains('active');
-      
-      if (isActive) {
-        // Close menu
-        hamburgerBtn.classList.remove('active');
-        menuOverlay.classList.remove('active');
-        slidingMenu.classList.remove('active');
-        document.body.style.overflow = '';
-      } else {
-        // Open menu
-        hamburgerBtn.classList.add('active');
-        menuOverlay.classList.add('active');
-        slidingMenu.classList.add('active');
-        document.body.style.overflow = 'hidden';
-      }
-    }
-  }
-}
-
-// Also add fallback button if hamburger fails
-if (isMobile) {
-  window.addEventListener('load', function() {
-    setTimeout(() => {
-      const hamburgerBtn = document.getElementById('hamburger-btn');
-      if (hamburgerBtn && !hamburgerBtn.onclick) {
-        console.log('⚠️ Adding fallback menu button');
-        
-        // Create fallback menu button
-        const fallbackBtn = document.createElement('button');
-        fallbackBtn.innerHTML = '☰ MENU';
-        fallbackBtn.style.cssText = `
-          position: fixed;
-          top: 10px;
-          left: 10px;
-          z-index: 9999;
-          background: var(--color-primary, #D4A5A5);
-          color: white;
-          border: none;
-          padding: 12px 16px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: bold;
-          cursor: pointer;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        `;
-        
-        fallbackBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          const slidingMenu = document.getElementById('sliding-menu');
-          const menuOverlay = document.getElementById('menu-overlay');
-          
-          if (slidingMenu && menuOverlay) {
-            const isActive = slidingMenu.classList.contains('active');
-            
-            if (isActive) {
-              menuOverlay.classList.remove('active');
-              slidingMenu.classList.remove('active');
-              document.body.style.overflow = '';
-            } else {
-              menuOverlay.classList.add('active');
-              slidingMenu.classList.add('active');
-              document.body.style.overflow = 'hidden';
-            }
-          }
-        });
-        
-        document.body.appendChild(fallbackBtn);
-      }
-    }, 2000);
-  });
-}
-
-// the end of Edge fix
 let appData = {
-  version: '1.0.0',
+  version: '2.0.0',
   lastUpdated: null,
   currentDate: "2025-08-25",
+  
+  // Firebase sync status
+  syncStatus: {
+    isOnline: false,
+    lastSync: null,
+    user: null
+  },
   
   // Simplified backup (no notifications)
   autoBackup: {
     changesCount: 0,
     maxChanges: 3,
-    autoDownload: false, // DISABLED auto-download
+    autoDownload: false,
     lastBackup: null
   },
   
@@ -241,30 +143,215 @@ let appData = {
 };
 
 let charts = {};
+let firebaseUnsubscribe = null;
 
-// Initialize Application - FIXED for all browsers
+// Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🌸 6xSBD PWA initializing...');
+  console.log('🌸 6xSBD PWA with Firebase initializing...');
   
   try {
-    loadDataFromStorage();
-    initializeHamburgerMenuFixed();
-    initializeDateSystem();
-    initializeAutoBackup();
-    initializeForms();
-    initializeCharts();
-    initializeTrainingCalendar(); // FIXED: Added this
+    // Initialize Firebase auth first
+    setTimeout(() => {
+      initializeFirebaseAuth();
+      
+      // Then initialize rest of app
+      loadDataFromStorage();
+      initializeHamburgerMenuFixed();
+      initializeDateSystem();
+      initializeAutoBackup();
+      initializeForms();
+      initializeCharts();
+      initializeTrainingCalendar();
+      
+      updateDashboard();
+      updateAllDateDependencies();
+      
+      console.log('✅ 6xSBD PWA with Firebase ready!');
+    }, 1000); // Wait for Firebase to be available
     
-    updateDashboard();
-    updateAllDateDependencies();
-    
-    console.log('✅ 6xSBD PWA ready!');
   } catch (error) {
     console.error('❌ Error initializing app:', error);
   }
 });
 
-// ==== SILENT LIVE SAVING (No notifications) ====
+// ==== FIREBASE AUTHENTICATION & SYNC ====
+
+function initializeFirebaseAuth() {
+  if (!window.firebaseAuth) {
+    console.warn('⚠️ Firebase not yet available, retrying...');
+    setTimeout(initializeFirebaseAuth, 500);
+    return;
+  }
+  
+  console.log('🔥 Initializing Firebase authentication...');
+  
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  const userInfo = document.getElementById('user-info');
+  const userAvatar = document.getElementById('user-avatar');
+  
+  // Setup auth state listener
+  window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
+    console.log('🔐 Auth state changed:', user ? 'Logged in' : 'Logged out');
+    
+    if (user) {
+      // User is signed in
+      appData.syncStatus.user = {
+        uid: user.uid,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        email: user.email
+      };
+      
+      // Update UI
+      loginBtn.style.display = 'none';
+      userInfo.style.display = 'flex';
+      userAvatar.src = user.photoURL || '';
+      userAvatar.alt = user.displayName || 'User';
+      
+      // Start Firebase sync
+      startFirebaseSync(user.uid);
+      updateSyncStatus('🔥 Zsynchronizowano z Firebase', true);
+      
+    } else {
+      // User is signed out
+      appData.syncStatus.user = null;
+      
+      // Update UI
+      loginBtn.style.display = 'block';
+      userInfo.style.display = 'none';
+      
+      // Stop Firebase sync
+      stopFirebaseSync();
+      updateSyncStatus('📱 Tryb lokalny', false);
+    }
+  });
+  
+  // Setup login button
+  if (loginBtn) {
+    loginBtn.addEventListener('click', signInWithGitHub);
+  }
+  
+  // Setup logout button
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', signOutUser);
+  }
+  
+  console.log('🔐 Firebase auth initialized');
+}
+
+async function signInWithGitHub() {
+  try {
+    const provider = new window.firebaseGithubAuthProvider();
+    provider.addScope('user:email');
+    
+    showSaveIndicator('🔐 Logowanie...', '#3b82f6');
+    
+    const result = await window.firebaseSignInWithPopup(window.firebaseAuth, provider);
+    console.log('✅ GitHub login successful:', result.user.displayName);
+    
+    showSaveIndicator('✅ Zalogowano!', '#22c55e');
+    
+  } catch (error) {
+    console.error('❌ GitHub login failed:', error);
+    showSaveIndicator('❌ Błąd logowania', '#ef4444');
+  }
+}
+
+async function signOutUser() {
+  try {
+    await window.firebaseSignOut(window.firebaseAuth);
+    showSaveIndicator('👋 Wylogowano', '#6b7280');
+    console.log('✅ User signed out');
+  } catch (error) {
+    console.error('❌ Sign out failed:', error);
+  }
+}
+
+function startFirebaseSync(userId) {
+  if (!window.firebaseDb || !userId) return;
+  
+  console.log('🔄 Starting Firebase sync for user:', userId);
+  
+  const userDocRef = window.firebaseDoc(window.firebaseDb, 'users', userId, 'data', 'appData');
+  
+  // Listen for real-time updates
+  firebaseUnsubscribe = window.firebaseOnSnapshot(userDocRef, (doc) => {
+    if (doc.exists()) {
+      const cloudData = doc.data();
+      
+      // Only update if cloud data is newer
+      if (cloudData.lastUpdated && cloudData.lastUpdated > appData.lastUpdated) {
+        console.log('📥 Receiving data from Firebase...');
+        
+        // Merge cloud data with local data
+        appData = { ...appData, ...cloudData };
+        
+        // Update UI
+        updateDashboard();
+        updateAllDateDependencies();
+        updateCharts();
+        
+        // Save to localStorage as well
+        saveDataToStorage();
+        
+        showSaveIndicator('📥 Zsynchronizowano', '#22c55e');
+      }
+    } else {
+      // No cloud data yet, upload local data
+      uploadToFirebase(userId);
+    }
+  }, (error) => {
+    console.error('❌ Firebase sync error:', error);
+    updateSyncStatus('❌ Błąd synchronizacji', false);
+  });
+}
+
+function stopFirebaseSync() {
+  if (firebaseUnsubscribe) {
+    firebaseUnsubscribe();
+    firebaseUnsubscribe = null;
+    console.log('🛑 Firebase sync stopped');
+  }
+}
+
+async function uploadToFirebase(userId) {
+  if (!window.firebaseDb || !userId) return;
+  
+  try {
+    console.log('📤 Uploading data to Firebase...');
+    
+    const userDocRef = window.firebaseDoc(window.firebaseDb, 'users', userId, 'data', 'appData');
+    
+    const uploadData = {
+      ...appData,
+      lastUpdated: new Date().toISOString(),
+      syncTimestamp: window.firebaseServerTimestamp()
+    };
+    
+    await window.firebaseSetDoc(userDocRef, uploadData);
+    
+    console.log('✅ Data uploaded to Firebase');
+    showSaveIndicator('📤 Przesłano do chmury', '#22c55e');
+    
+  } catch (error) {
+    console.error('❌ Firebase upload failed:', error);
+    showSaveIndicator('❌ Błąd synchronizacji', '#ef4444');
+  }
+}
+
+function updateSyncStatus(message, isOnline) {
+  appData.syncStatus.isOnline = isOnline;
+  appData.syncStatus.lastSync = new Date().toISOString();
+  
+  const syncIndicator = document.getElementById('sync-indicator');
+  if (syncIndicator) {
+    syncIndicator.textContent = message;
+    syncIndicator.className = isOnline ? 'sync-status online' : 'sync-status offline';
+  }
+}
+
+// ==== ENHANCED DATA SAVING (Local + Firebase) ====
 
 function loadDataFromStorage() {
   try {
@@ -285,6 +372,12 @@ function saveDataToStorage() {
     appData.lastUpdated = new Date().toISOString();
     localStorage.setItem('6xsbd-data', JSON.stringify(appData));
     console.log('💾 Data saved to localStorage');
+    
+    // Also save to Firebase if user is logged in
+    if (appData.syncStatus.user) {
+      uploadToFirebase(appData.syncStatus.user.uid);
+    }
+    
     showSaveIndicator('💾 Zapisano', '#22c55e');
   } catch (error) {
     console.error('❌ Error saving data:', error);
@@ -299,7 +392,7 @@ function showSaveIndicator(text, color) {
     indicator.id = 'save-indicator';
     indicator.style.cssText = `
       position: fixed;
-      top: 20px;
+      top: 80px;
       right: 20px;
       background: ${color};
       color: white;
@@ -423,7 +516,7 @@ function setupHamburgerMenu() {
   console.log('🍔 Hamburger menu setup complete!');
 }
 
-// ==== FIXED TRAINING CALENDAR SECTION ====
+// ==== TRAINING CALENDAR SECTION ====
 
 function initializeTrainingCalendar() {
   console.log('📅 Initializing training calendar...');
@@ -605,7 +698,7 @@ function updateCurrentDate(newDate) {
   
   console.log(`📅 Date changed: ${oldDate} → ${newDate}`);
   
-  saveDataToStorage(); // Silent save
+  saveDataToStorage(); // This will also sync to Firebase
   trackChange(`Zmieniono datę na ${formatDatePolish(newDate)}`);
   updateAllDateDependencies();
 }
@@ -619,7 +712,7 @@ function updateAllDateDependencies() {
     updateNutritionTargets();
     updateCompetitionCountdown();
     updateProgressTimelines();
-    updateTrainingScheduleView(); // Update calendar when date changes
+    updateTrainingScheduleView();
     
     console.log('🔄 All date dependencies updated');
   } catch (error) {
@@ -852,6 +945,7 @@ function updateDetailedWorkout(currentPhase, isTrainingDay, dayName) {
           <p>💡 <strong>Tip:</strong> Bazowane na metodach Agaty Sitko</p>
           <p>🎪 Dostosuj ciężary do swojego samopoczucia</p>
           <p>🌸 Pamiętaj o rozgrzewce i cool-down!</p>
+          <p>🔥 <strong>Firebase:</strong> Dane synchronizują się automatycznie!</p>
         </div>
       </div>
     `;
@@ -1088,11 +1182,9 @@ function trackChange(changeDescription = 'Dodano dane') {
   appData.autoBackup.changesCount++;
   console.log(`📊 Change tracked: ${changeDescription} (${appData.autoBackup.changesCount}/${appData.autoBackup.maxChanges})`);
   
-  // Silent save - no notifications
+  // Silent save - this will also sync to Firebase if logged in
   saveDataToStorage();
   updateAutoBackupUI();
-  
-  // NO auto-download, just track
 }
 
 function performManualBackup() {
@@ -1131,7 +1223,8 @@ function exportForTrainer() {
       prHistory: appData.prHistory,
       measurementsHistory: appData.measurements,
       menstrualCycle: appData.menstrualCycle,
-      bodyGoals: appData.bodyGoals
+      bodyGoals: appData.bodyGoals,
+      syncStatus: appData.syncStatus
     };
     
     const fileName = `6xSBD-trainer-export-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-')}.json`;
@@ -1148,9 +1241,10 @@ function exportForTrainer() {
 
 function createBackupData() {
   return {
-    version: "1.0",
+    version: "2.0",
     backupType: "complete",
     timestamp: new Date().toISOString(),
+    syncEnabled: !!appData.syncStatus.user,
     appData: { ...appData }
   };
 }
@@ -1249,6 +1343,7 @@ function handleFileRestore(event) {
         datePicker.value = appData.currentDate;
       }
       
+      // Save to localStorage and Firebase if logged in
       saveDataToStorage();
       updateDashboard();
       updateAllDateDependencies();
@@ -1641,5 +1736,5 @@ window.addEventListener('load', function() {
   
   updateAutoBackupUI();
   
-  console.log('🎉 6xSBD PWA FULLY LOADED - All browsers supported, silent saving, working Treningi tab!');
+  console.log('🎉 6xSBD PWA with Firebase FULLY LOADED!');
 });
