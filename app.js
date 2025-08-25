@@ -1,8 +1,8 @@
-// 🌸🐱 Aitashii Powerlifting Tracker - FIXED VERSION
-// Fixed: Calendar clicks, Auto-updating date, Firebase auth
+// 🌸🐱 Aitashii Powerlifting Tracker - FIXED REAL-TIME SYNC VERSION
+// Fixed: Real-time sync between devices, manualSync function, proper listeners
 
 let appData = {
-  version: '2.1.0',
+  version: '2.2.0',
   lastUpdated: null,
   currentDate: "2025-08-25", // Will be auto-updated
   
@@ -145,10 +145,11 @@ let appData = {
 let charts = {};
 let firebaseUnsubscribe = null;
 let autoDateUpdateInterval = null;
+let isUpdatingFromFirebase = false; // FIXED: Prevent infinite loops
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🌸 Aitashii Powerlifting Tracker with AUTO-DATE initializing...');
+  console.log('🌸 Aitashii Powerlifting Tracker with FIXED REAL-TIME SYNC initializing...');
   
   try {
     // Initialize auto-updating date system FIRST
@@ -164,12 +165,12 @@ document.addEventListener('DOMContentLoaded', function() {
       initializeAutoBackup();
       initializeForms();
       initializeCharts();
-      initializeTrainingCalendarFixed(); // FIXED VERSION
+      initializeTrainingCalendarFixed();
       
       updateDashboard();
       updateAllDateDependencies();
       
-      console.log('✅ Aitashii Powerlifting Tracker with AUTO-DATE ready!');
+      console.log('✅ Aitashii Powerlifting Tracker with FIXED REAL-TIME SYNC ready!');
     }, 1000);
     
   } catch (error) {
@@ -182,10 +183,8 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeAutoDateSystem() {
   console.log('📅 Initializing AUTO-UPDATING date system (Zurich timezone)...');
   
-  // Update date immediately
   updateCurrentDateToNow();
   
-  // Update every minute
   autoDateUpdateInterval = setInterval(() => {
     updateCurrentDateToNow();
   }, 60000); // Every 60 seconds
@@ -194,12 +193,10 @@ function initializeAutoDateSystem() {
 }
 
 function updateCurrentDateToNow() {
-  // Get current date in Zurich timezone
   const now = new Date();
   const zurichTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Zurich"}));
   const currentDateStr = zurichTime.toISOString().split('T')[0];
   
-  // Only update if date actually changed
   if (appData.currentDate !== currentDateStr) {
     console.log(`📅 Auto date update: ${appData.currentDate} → ${currentDateStr}`);
     
@@ -208,7 +205,6 @@ function updateCurrentDateToNow() {
     updateAllDateDependencies();
   }
   
-  // Always update time display
   updateTimeDisplay(zurichTime);
 }
 
@@ -227,12 +223,73 @@ function updateTimeDisplay(zurichTime) {
   }
 }
 
-// Helper function for "Today" button (now just refreshes display)
 window.setToday = function() {
   updateCurrentDateToNow();
 }
 
-// ==== FIREBASE AUTHENTICATION & SYNC (FIXED) ====
+// ==== MANUAL SYNC FUNCTION (FIXED) ====
+
+window.manualSync = function() {
+  if (!appData.syncStatus.user) {
+    showSaveIndicator('❌ Nie zalogowano', '#ef4444');
+    return;
+  }
+  
+  console.log('🔄 Manual sync requested...');
+  showSaveIndicator('🔄 Synchronizacja...', '#3b82f6');
+  
+  // First upload our current data
+  uploadToFirebase(appData.syncStatus.user.uid);
+  
+  // Then force refresh from Firebase after 2 seconds
+  setTimeout(() => {
+    forceRefreshFromFirebase();
+  }, 2000);
+}
+
+async function forceRefreshFromFirebase() {
+  if (!window.firebaseDb || !appData.syncStatus.user) return;
+  
+  try {
+    console.log('🔄 Force refreshing from Firebase...');
+    
+    const userDocRef = window.firebaseDoc(window.firebaseDb, 'users', appData.syncStatus.user.uid, 'data', 'appData');
+    const doc = await window.firebaseGetDoc(userDocRef);
+    
+    if (doc.exists()) {
+      const cloudData = doc.data();
+      console.log('📥 Manual refresh - Cloud timestamp:', cloudData.lastUpdated);
+      console.log('📱 Manual refresh - Local timestamp:', appData.lastUpdated);
+      
+      if (cloudData.lastUpdated && cloudData.lastUpdated !== appData.lastUpdated) {
+        console.log('🔄 Applying cloud data...');
+        
+        isUpdatingFromFirebase = true; // Prevent loop
+        appData = { ...appData, ...cloudData };
+        
+        updateDashboard();
+        updateAllDateDependencies();
+        updateCharts();
+        
+        // Save to localStorage (but don't sync back to Firebase)
+        localStorage.setItem('aitashii-powerlifting-data', JSON.stringify(appData));
+        
+        isUpdatingFromFirebase = false;
+        
+        showSaveIndicator('✅ Zsynchronizowano!', '#22c55e');
+      } else {
+        showSaveIndicator('ℹ️ Dane aktualne', '#3b82f6');
+      }
+    } else {
+      showSaveIndicator('❌ Brak danych w chmurze', '#ef4444');
+    }
+  } catch (error) {
+    console.error('❌ Manual refresh failed:', error);
+    showSaveIndicator('❌ Błąd synchronizacji', '#ef4444');
+  }
+}
+
+// ==== FIXED FIREBASE AUTHENTICATION & SYNC ====
 
 function initializeFirebaseAuth() {
   if (!window.firebaseAuth) {
@@ -248,12 +305,10 @@ function initializeFirebaseAuth() {
   const userInfo = document.getElementById('user-info');
   const userAvatar = document.getElementById('user-avatar');
   
-  // Setup auth state listener
   window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
     console.log('🔐 Auth state changed:', user ? 'Logged in' : 'Logged out');
     
     if (user) {
-      // User is signed in
       appData.syncStatus.user = {
         uid: user.uid,
         displayName: user.displayName,
@@ -261,36 +316,29 @@ function initializeFirebaseAuth() {
         email: user.email
       };
       
-      // Update UI
       loginBtn.style.display = 'none';
       userInfo.style.display = 'flex';
       userAvatar.src = user.photoURL || '';
       userAvatar.alt = user.displayName || 'User';
       
-      // Start Firebase sync
       startFirebaseSync(user.uid);
       updateSyncStatus('🔥 Zsynchronizowano z Firebase', true);
       
     } else {
-      // User is signed out
       appData.syncStatus.user = null;
       
-      // Update UI
       loginBtn.style.display = 'block';
       userInfo.style.display = 'none';
       
-      // Stop Firebase sync
       stopFirebaseSync();
       updateSyncStatus('📱 Tryb lokalny', false);
     }
   });
   
-  // Setup login button with BETTER ERROR HANDLING
   if (loginBtn) {
     loginBtn.addEventListener('click', signInWithGitHubFixed);
   }
   
-  // Setup logout button
   if (logoutBtn) {
     logoutBtn.addEventListener('click', signOutUser);
   }
@@ -304,15 +352,12 @@ async function signInWithGitHubFixed() {
     
     const provider = new window.firebaseGithubAuthProvider();
     provider.addScope('user:email');
-    
-    // Add custom parameters to help with popup
     provider.setCustomParameters({
       allow_signup: 'true'
     });
     
     showSaveIndicator('🔐 Logowanie...', '#3b82f6');
     
-    // Use popup with specific settings
     const result = await window.firebaseSignInWithPopup(window.firebaseAuth, provider);
     console.log('✅ GitHub login successful:', result.user.displayName);
     
@@ -321,7 +366,6 @@ async function signInWithGitHubFixed() {
   } catch (error) {
     console.error('❌ GitHub login failed:', error);
     
-    // More specific error messages
     let errorMessage = 'Nieznany błąd';
     
     if (error.code === 'auth/popup-closed-by-user') {
@@ -337,7 +381,6 @@ async function signInWithGitHubFixed() {
     console.error('Detailed error:', errorMessage, error.code);
     showSaveIndicator(`❌ ${errorMessage}`, '#ef4444');
     
-    // Try to help debug
     if (error.code === 'auth/unauthorized-domain') {
       console.error('🔧 Add this domain to Firebase Auth: aitashii.github.io');
     }
@@ -357,18 +400,32 @@ async function signOutUser() {
 function startFirebaseSync(userId) {
   if (!window.firebaseDb || !userId) return;
   
-  console.log('🔄 Starting Firebase sync for user:', userId);
+  console.log('🔄 Starting FIXED Firebase sync for user:', userId);
   
   const userDocRef = window.firebaseDoc(window.firebaseDb, 'users', userId, 'data', 'appData');
   
-  // Listen for real-time updates
+  // FIXED: Better real-time listener
   firebaseUnsubscribe = window.firebaseOnSnapshot(userDocRef, (doc) => {
+    if (isUpdatingFromFirebase) {
+      console.log('🔄 Skipping update - already updating from Firebase');
+      return;
+    }
+    
     if (doc.exists()) {
       const cloudData = doc.data();
       
-      // Only update if cloud data is newer
-      if (cloudData.lastUpdated && cloudData.lastUpdated > appData.lastUpdated) {
-        console.log('📥 Receiving data from Firebase...');
+      console.log('🔍 Firebase listener triggered');
+      console.log('📊 Cloud timestamp:', cloudData.lastUpdated);
+      console.log('📱 Local timestamp:', appData.lastUpdated);
+      
+      // More robust timestamp comparison
+      const cloudTime = new Date(cloudData.lastUpdated || 0).getTime();
+      const localTime = new Date(appData.lastUpdated || 0).getTime();
+      
+      if (cloudTime > localTime + 1000) { // 1 second buffer to prevent loops
+        console.log('📥 Receiving newer data from Firebase...');
+        
+        isUpdatingFromFirebase = true;
         
         // Merge cloud data with local data
         appData = { ...appData, ...cloudData };
@@ -378,13 +435,18 @@ function startFirebaseSync(userId) {
         updateAllDateDependencies();
         updateCharts();
         
-        // Save to localStorage as well
-        saveDataToStorage();
+        // Save to localStorage (but don't trigger Firebase upload)
+        localStorage.setItem('aitashii-powerlifting-data', JSON.stringify(appData));
         
         showSaveIndicator('📥 Zsynchronizowano', '#22c55e');
+        
+        isUpdatingFromFirebase = false;
+      } else {
+        console.log('ℹ️ Cloud data is not newer, skipping update');
       }
     } else {
       // No cloud data yet, upload local data
+      console.log('📤 No cloud data found, uploading local data...');
       uploadToFirebase(userId);
     }
   }, (error) => {
@@ -402,7 +464,7 @@ function stopFirebaseSync() {
 }
 
 async function uploadToFirebase(userId) {
-  if (!window.firebaseDb || !userId) return;
+  if (!window.firebaseDb || !userId || isUpdatingFromFirebase) return;
   
   try {
     console.log('📤 Uploading data to Firebase...');
@@ -452,132 +514,20 @@ function loadDataFromStorage() {
     console.error('❌ Error loading data:', error);
   }
 }
-// ==== MOBILE SYNC HELPER ====
 
-function addMobileSyncButton() {
-  // Check if we're on mobile
-  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  
-  if (isMobile) {
-    console.log('📱 Mobile detected - adding sync helpers');
-    
-    // Add manual sync button to header
-    const headerActions = document.querySelector('.header-actions');
-    if (headerActions && !document.getElementById('mobile-sync-btn')) {
-      const syncBtn = document.createElement('button');
-      syncBtn.id = 'mobile-sync-btn';
-      syncBtn.className = 'btn btn--small';
-      syncBtn.innerHTML = '🔄 Sync';
-      syncBtn.onclick = forceMobileSync;
-      headerActions.insertBefore(syncBtn, headerActions.firstChild);
-    }
-    
-    // Add sync status to dashboard
-    addSyncStatusIndicator();
-    
-    // Auto-sync every 2 minutes on mobile
-    setInterval(forceMobileSync, 120000); // 2 minutes
-  }
-}
-
-function forceMobileSync() {
-  if (appData.syncStatus.user) {
-    console.log('📱 Force mobile sync...');
-    showSaveIndicator('🔄 Synchronizacja...', '#3b82f6');
-    
-    // Force upload current data
-    uploadToFirebase(appData.syncStatus.user.uid);
-    
-    // Force refresh data from Firebase
-    setTimeout(() => {
-      refreshFromFirebase();
-    }, 2000);
-  } else {
-    showSaveIndicator('❌ Nie zalogowano', '#ef4444');
-  }
-}
-
-function refreshFromFirebase() {
-  if (!window.firebaseDb || !appData.syncStatus.user) return;
-  
-  const userDocRef = window.firebaseDoc(window.firebaseDb, 'users', appData.syncStatus.user.uid, 'data', 'appData');
-  
-  window.firebaseGetDoc(userDocRef).then((doc) => {
-    if (doc.exists()) {
-      const cloudData = doc.data();
-      console.log('📱 Manual refresh from Firebase');
-      
-      if (cloudData.lastUpdated && cloudData.lastUpdated > appData.lastUpdated) {
-        appData = { ...appData, ...cloudData };
-        
-        updateDashboard();
-        updateAllDateDependencies();
-        updateCharts();
-        saveDataToStorage();
-        
-        showSaveIndicator('✅ Zsynchronizowano!', '#22c55e');
-        updateSyncStatusIndicator('✅ Sync OK', '#22c55e');
-      } else {
-        showSaveIndicator('ℹ️ Dane aktualne', '#3b82f6');
-        updateSyncStatusIndicator('ℹ️ Dane aktualne', '#3b82f6');
-      }
-    }
-  }).catch((error) => {
-    console.error('❌ Manual sync failed:', error);
-    showSaveIndicator('❌ Błąd sync', '#ef4444');
-    updateSyncStatusIndicator('❌ Błąd sync', '#ef4444');
-  });
-}
-
-function addSyncStatusIndicator() {
-  const dashboard = document.getElementById('dashboard');
-  if (dashboard && !document.getElementById('mobile-sync-status')) {
-    const syncStatus = document.createElement('div');
-    syncStatus.id = 'mobile-sync-status';
-    syncStatus.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #6b7280;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      z-index: 1000;
-    `;
-    syncStatus.textContent = '📱 Mobile Mode';
-    document.body.appendChild(syncStatus);
-  }
-}
-
-function updateSyncStatusIndicator(message, color) {
-  const indicator = document.getElementById('mobile-sync-status');
-  if (indicator) {
-    indicator.textContent = message;
-    indicator.style.backgroundColor = color;
-    
-    setTimeout(() => {
-      indicator.style.backgroundColor = '#6b7280';
-      indicator.textContent = '📱 Mobile Mode';
-    }, 3000);
-  }
-}
-
-// Call this in the initialization
-document.addEventListener('DOMContentLoaded', function() {
-  // Add after existing DOMContentLoaded code
-  setTimeout(() => {
-    addMobileSyncButton();
-  }, 2000);
-});
 function saveDataToStorage() {
+  if (isUpdatingFromFirebase) {
+    console.log('🔄 Skipping save - updating from Firebase');
+    return;
+  }
+  
   try {
     appData.lastUpdated = new Date().toISOString();
     localStorage.setItem('aitashii-powerlifting-data', JSON.stringify(appData));
     console.log('💾 Data saved to localStorage');
     
     // Also save to Firebase if user is logged in
-    if (appData.syncStatus.user) {
+    if (appData.syncStatus.user && !isUpdatingFromFirebase) {
       uploadToFirebase(appData.syncStatus.user.uid);
     }
     
@@ -717,7 +667,6 @@ function setupHamburgerMenu() {
 function initializeTrainingCalendarFixed() {
   console.log('📅 Initializing FIXED training calendar...');
   
-  // Make sure global functions are available
   window.changeCalendarMonth = changeCalendarMonth;
   window.selectTrainingDay = selectTrainingDay;
 }
@@ -759,28 +708,24 @@ function updateTrainingScheduleView() {
       <div class="calendar-days">
   `;
   
-  // Generate calendar days
   const firstDay = new Date(currentYear, currentMonth, 1);
   const lastDay = new Date(currentYear, currentMonth + 1, 0);
-  const startingDayOfWeek = (firstDay.getDay() + 6) % 7; // Convert to Monday = 0
+  const startingDayOfWeek = (firstDay.getDay() + 6) % 7;
   
-  // Add empty cells for days before month starts
   for (let i = 0; i < startingDayOfWeek; i++) {
     calendarHTML += '<div class="calendar-day empty"></div>';
   }
   
-  // Add days of the month
   for (let day = 1; day <= lastDay.getDate(); day++) {
     const date = new Date(currentYear, currentMonth, day);
     const dateStr = date.toISOString().split('T')[0];
     const dayOfWeek = date.getDay();
     const isToday = dateStr === appData.currentDate;
-    const isRestDay = dayOfWeek === 5; // Friday
+    const isRestDay = dayOfWeek === 5;
     
     const dayClass = isToday ? 'today' : (isRestDay ? 'rest-day' : 'training-day');
     const dayIcon = isRestDay ? '💤' : '💪';
     
-    // FIXED: Use proper onclick with quotes
     calendarHTML += `
       <div class="calendar-day ${dayClass}" onclick="selectTrainingDay('${dateStr}')">
         <div class="day-number">${day}</div>
@@ -802,7 +747,6 @@ function updateTrainingScheduleView() {
   console.log('✅ FIXED Training calendar rendered with clickable days');
 }
 
-// FIXED: Global function for day selection
 function selectTrainingDay(dateStr) {
   console.log('📅 Selected training day:', dateStr);
   
@@ -816,7 +760,7 @@ function selectTrainingDay(dateStr) {
   const dayName = getDayOfWeekPolish(date);
   const dayOfWeek = date.getDay();
   
-  if (dayOfWeek === 5) { // Rest day
+  if (dayOfWeek === 5) {
     selectedWorkout.innerHTML = `
       <h4>💤 ${dayName} - Dzień odpoczynku</h4>
       <div class="rest-day-activities">
@@ -825,7 +769,7 @@ function selectTrainingDay(dateStr) {
         <div class="activity-item">💆‍♀️ Regeneracja</div>
       </div>
     `;
-  } else { // Training day
+  } else {
     const currentPhase = getCurrentTrainingPhase();
     if (currentPhase) {
       const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * currentPhase.exercises.squat.intensity);
@@ -859,19 +803,16 @@ function selectTrainingDay(dateStr) {
   console.log('✅ Training day details updated');
 }
 
-// FIXED: Global function for calendar navigation
 function changeCalendarMonth(direction) {
   const currentDate = new Date(appData.currentDate);
   currentDate.setMonth(currentDate.getMonth() + direction);
   
-  // Don't change actual app date, just calendar view
   const newDateStr = currentDate.toISOString().split('T')[0];
   
-  // Temporarily update for calendar rendering
   const originalDate = appData.currentDate;
   appData.currentDate = newDateStr;
   updateTrainingScheduleView();
-  appData.currentDate = originalDate; // Restore original date
+  appData.currentDate = originalDate;
   
   console.log('📅 Calendar month changed:', direction > 0 ? 'next' : 'previous');
 }
@@ -947,7 +888,7 @@ function updateDailyWorkout() {
   let isTrainingDay = true;
   let workoutContent = '';
   
-  if (dayOfWeek === 5) { // Friday - Rest day
+  if (dayOfWeek === 5) {
     isTrainingDay = false;
     if (workoutTitle) workoutTitle.textContent = `💤 Odpoczynek - ${dayName}`;
     if (workoutStatus) {
@@ -1115,7 +1056,7 @@ function updateDetailedWorkout(currentPhase, isTrainingDay, dayName) {
           <p>💡 <strong>Tip:</strong> Bazowane na metodologii Aitashii</p>
           <p>🎪 Dostosuj ciężary do swojego samopoczucia</p>
           <p>🌸 Pamiętaj o rozgrzewce i cool-down!</p>
-          <p>🔥 <strong>Auto-sync:</strong> Dane synchronizują się automatycznie!</p>
+          <p>🔥 <strong>Real-time sync:</strong> Dane synchronizują się automatycznie!</p>
         </div>
       </div>
     `;
@@ -1405,7 +1346,7 @@ function exportForTrainer() {
 
 function createBackupData() {
   return {
-    version: "2.1",
+    version: "2.2",
     appName: "Aitashii Powerlifting Tracker",
     backupType: "complete",
     timestamp: new Date().toISOString(),
@@ -1894,5 +1835,5 @@ window.addEventListener('load', function() {
   
   updateAutoBackupUI();
   
-  console.log('🎉 Aitashii Powerlifting Tracker with AUTO-DATE & FIXED CALENDAR ready!');
+  console.log('🎉 Aitashii Powerlifting Tracker with FIXED REAL-TIME SYNC ready!');
 });
