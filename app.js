@@ -5,7 +5,43 @@ let appData = {
   version: '3.0.0',
   lastUpdated: null,
   currentDate: "2025-08-25", // Auto-updated (Zurich timezone)
-  
+  // 1) Uruchom przy starcie aplikacji
+function startZurichClock() {
+  const dateFmt = new Intl.DateTimeFormat('pl-PL', {
+    timeZone: 'Europe/Zurich',
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  const timeFmt = new Intl.DateTimeFormat('pl-PL', {
+    timeZone: 'Europe/Zurich',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+  });
+  const dateIsoFmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit'
+  });
+
+  function tick() {
+    const now = new Date();
+    const el = document.getElementById('nav-date');
+    if (el) el.textContent = `${dateFmt.format(now)} • ${timeFmt.format(now)} (Zürich)`;
+
+    // Trzymaj currentDate w formacie YYYY-MM-DD zgodnym ze strefą Zurich
+    const ymd = dateIsoFmt.format(now); // np. 2025-08-25
+    if (window.appData && window.appData.currentDate !== ymd) {
+      window.appData.currentDate = ymd;
+      if (typeof updateAllDateDependencies === 'function') {
+        updateAllDateDependencies();
+      }
+    }
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// 2) W miejscu inicjalizacji (po DOMContentLoaded)
+document.addEventListener('DOMContentLoaded', () => {
+  startZurichClock();
+});
+
   // Firebase sync status
   syncStatus: {
     isOnline: false,
