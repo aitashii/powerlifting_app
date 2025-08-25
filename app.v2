@@ -1,31 +1,34 @@
-// 🌸🐱 Aitashii Powerlifting Tracker - FIXED APPLICATION DATA & FUNCTIONALITY
+// 🌸🐱 Aitashii Powerlifting Tracker - COMPLETE FEATURED VERSION
+// Features: Full Dashboard, Timer System, Calendar, All Sections in English
 
 let appData = {
-  // NEW: Current Date System - controls all date-dependent functionality
-  currentDate: "2025-08-25", // Default starting date
+  version: '3.0.0',
+  lastUpdated: null,
+  currentDate: "2025-08-25", // Auto-updated (Zurich timezone)
   
-  // Auto-backup settings (updated to 3 changes)
-  autoBackup: {
-    changesCount: 0,
-    maxChanges: 3,
-    autoDownload: true
+  // Firebase sync status
+  syncStatus: {
+    isOnline: false,
+    lastSync: null,
+    user: null
   },
   
+  // Current PRs
   currentPRs: {
     squat: { weight: 40, reps: 5, date: "2025-08-23", estimated1RM: 45 },
     bench: { weight: 45, reps: 1, date: "2025-08-23", estimated1RM: 45 },
     deadlift: { weight: 90, reps: 1, date: "2025-07-31", estimated1RM: 90 }
   },
   
-  // Enhanced measurements with fat mass and body water
+  // Body measurements
   measurements: [
     { 
       date: "2025-08-19", 
       weight: 84.1, 
       bodyFat: 38, 
-      muscle: 44.3, 
-      fatMass: 32.0, 
-      bodyWater: 38.1 
+      muscle: 27.1,
+      fatMass: 32.7,
+      bodyWater: 37.7
     }
   ],
   
@@ -34,30 +37,28 @@ let appData = {
     current: {
       weight: 84.1,
       bodyFat: 38,
-      fatMass: 32.0,
-      muscleMass: 44.3,
-      bodyWater: 38.1
+      fatMass: 32.7,
+      muscleMass: 27.1,
+      bodyWater: 37.7
     },
     target: {
       weight: 72,
       bodyFat: 18,
       fatMass: 13.0,
-      muscleMass: 50.2,
+      muscleMass: 32.7,
       bodyWater: 43.1
-    },
-    changes: {
-      fatLoss: 19.0,
-      muscleGain: 5.9,
-      waterGain: 5.0,
-      netWeightLoss: 12.1
     }
   },
   
+  // Menstrual cycle tracking
   menstrualCycle: {
-    lastPeriod: "2025-08-20",
+    lastPeriodStart: "2025-08-20",
+    lastPeriodEnd: "2025-08-25", 
+    periodLength: 6,
     cycleLength: 28
   },
   
+  // PR History
   prHistory: {
     squat: [
       { date: "2025-08-23", weight: 40, reps: 5, estimated1RM: 45 }
@@ -71,7 +72,7 @@ let appData = {
     ]
   },
   
-  // Complete 4-phase training plan with exact dates
+  // Training phases
   trainingPhases: {
     phase1: {
       name: "HYPERTROPHY + REHAB",
@@ -79,23 +80,41 @@ let appData = {
       endDate: "2025-10-06",
       duration: "6 weeks",
       intensityRange: "65-80%",
-      focus: "Volume, technique, adductor strengthening"
+      focus: "Volume, technique, adductor strengthening",
+      exercises: {
+        squat: {sets: 3, reps: "8-12", intensity: 0.70},
+        bench: {sets: 4, reps: "6-10", intensity: 0.75}, 
+        deadlift: {sets: 3, reps: "5-8", intensity: 0.72}
+      },
+      accessories: ["Adductor work (priority)", "Pause squats", "Tempo bench", "RDLs"]
     },
     phase2: {
-      name: "STRENGTH", 
+      name: "STRENGTH",
       startDate: "2025-10-07",
       endDate: "2025-11-17",
-      duration: "6 weeks", 
+      duration: "6 weeks",
       intensityRange: "80-90%",
-      focus: "Strength development, power preparation"
+      focus: "Strength development, power preparation",
+      exercises: {
+        squat: {sets: 4, reps: "3-6", intensity: 0.85},
+        bench: {sets: 4, reps: "3-5", intensity: 0.87},
+        deadlift: {sets: 3, reps: "2-5", intensity: 0.85}
+      },
+      accessories: ["Competition commands", "Heavy singles", "Speed work"]
     },
     phase3: {
       name: "POWER",
       startDate: "2025-11-18",
       endDate: "2025-12-29",
       duration: "6 weeks",
-      intensityRange: "90-100%", 
-      focus: "Peak strength, competition commands"
+      intensityRange: "90-100%",
+      focus: "Peak strength, competition commands",
+      exercises: {
+        squat: {sets: 5, reps: "1-3", intensity: 0.95},
+        bench: {sets: 5, reps: "1-3", intensity: 0.95},
+        deadlift: {sets: 4, reps: "1-3", intensity: 0.95}
+      },
+      accessories: ["Opener practice", "Competition timing", "Mental prep"]
     },
     phase4: {
       name: "PEAKING",
@@ -103,1146 +122,1284 @@ let appData = {
       endDate: "2026-03-30",
       duration: "12 weeks",
       intensityRange: "Competition prep",
-      focus: "Opener/second/third attempts, deload"
+      focus: "Opener/second/third attempts, deload",
+      exercises: {
+        squat: {sets: 4, reps: "1-2", intensity: 0.90},
+        bench: {sets: 4, reps: "1-2", intensity: 0.90},
+        deadlift: {sets: 3, reps: "1-2", intensity: 0.90}
+      },
+      accessories: ["Deload work", "Technical refinement", "Meet simulation"]
     }
   },
   
-  competitionInfo: {
-    location: "German-speaking cantons of Switzerland",
-    federationType: "Drug-free federations", 
-    targetDate: "2026-03-30", // Fixed target date
-    weightClass: "72kg"
-  },
-  
-  // Weekly training schedule
-  weeklySchedule: {
-    monday: "SBD Training",
-    tuesday: "SBD Training",
-    wednesday: "SBD Training", 
-    thursday: "SBD Training",
-    friday: "REST/MOBILITY",
-    saturday: "SBD Training",
-    sunday: "SBD Training"
+  // Weekly progress tracking
+  weeklyProgress: {
+    currentWeek: 1,
+    totalWeeks: 30,
+    completedSessions: [true, true, true, true, false, true, true], // P, W, Ś, C, P, S, N
+    weeklyVolume: 12450
   }
 };
 
-// Timer variables
-let timerInterval = null;
-let timerSeconds = 0;
-let isTimerRunning = false;
-let restTimerInterval = null;
-let restTimerSeconds = 0;
-let isRestTimerRunning = false;
-
-// Chart instances
 let charts = {};
+let firebaseUnsubscribe = null;
+let autoDateUpdateInterval = null;
+let isUpdatingFromFirebase = false;
 
-// Firebase Auth State
-let currentUser = null;
-let isSignedIn = false;
+// Timer variables
+let workoutTimer = {
+  isRunning: false,
+  startTime: null,
+  elapsed: 0,
+  interval: null
+};
+
+let restTimer = {
+  isRunning: false,
+  duration: 0,
+  remaining: 0,
+  interval: null
+};
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🌸 Aitashii app loaded, initializing...');
+  console.log('🌸 Aitashii Powerlifting Tracker - COMPLETE VERSION initializing...');
   
-  initializeNavigation();
-  initializeTimer();
-  initializePRForm();
-  initializeMeasurementsForm();
-  initializeCycleTracker();
-  setupFatMassCalculation();
-  initializeDateControl();
-  initializeAuth();
-  
-  // Wait for charts to initialize after DOM is ready
-  setTimeout(() => {
-    initializeCharts();
-  }, 100);
-  
-  updateAllDateDependencies();
-  updateDashboard();
-  updateAutoBackupDisplay();
-  
-  console.log('✅ App fully initialized');
+  try {
+    initializeAutoDateSystem();
+    
+    setTimeout(() => {
+      initializeFirebaseAuth();
+      loadDataFromStorage();
+      initializeNavigation();
+      initializeForms();
+      initializeTimers();
+      initializeCharts();
+      
+      updateAllSections();
+      
+      console.log('✅ Complete Aitashii Powerlifting Tracker ready!');
+    }, 1000);
+    
+  } catch (error) {
+    console.error('❌ Error initializing app:', error);
+  }
 });
 
-// NEW: Firebase Authentication
-function initializeAuth() {
+// ==== AUTO-UPDATING DATE SYSTEM ====
+
+function initializeAutoDateSystem() {
+  console.log('📅 Initializing auto-date system (Zurich timezone)...');
+  
+  updateCurrentDateToNow();
+  autoDateUpdateInterval = setInterval(updateCurrentDateToNow, 60000);
+  
+  console.log('📅 Auto-date system initialized');
+}
+
+function updateCurrentDateToNow() {
+  const now = new Date();
+  const zurichTime = new Date(now.toLocaleString("en-US", {timeZone: "Europe/Zurich"}));
+  const currentDateStr = zurichTime.toISOString().split('T')[0];
+  
+  if (appData.currentDate !== currentDateStr) {
+    console.log(`📅 Date updated: ${appData.currentDate} → ${currentDateStr}`);
+    appData.currentDate = currentDateStr;
+    saveDataToStorage();
+    updateAllSections();
+  }
+  
+  updateDateDisplay();
+}
+
+function updateDateDisplay() {
+  const currentDate = new Date(appData.currentDate);
+  const options = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    timeZone: 'Europe/Zurich'
+  };
+  const formattedDate = currentDate.toLocaleDateString('en-US', options);
+  
+  const dateDisplay = document.getElementById('current-date-display');
+  if (dateDisplay) {
+    dateDisplay.textContent = formattedDate;
+  }
+}
+
+// ==== FIREBASE AUTHENTICATION & SYNC ====
+
+function initializeFirebaseAuth() {
+  if (!window.firebaseAuth) {
+    setTimeout(initializeFirebaseAuth, 500);
+    return;
+  }
+  
+  console.log('🔥 Initializing Firebase auth...');
+  
   const loginBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
   const userInfo = document.getElementById('user-info');
   const userAvatar = document.getElementById('user-avatar');
   
-  if (!window.firebaseAuth) {
-    console.warn('Firebase not available - offline mode');
-    return;
-  }
-
-  // GitHub sign in
-  loginBtn?.addEventListener('click', async () => {
-    try {
-      const provider = new window.firebaseGithubAuthProvider();
-      const result = await window.firebaseSignInWithPopup(provider);
-      console.log('🔥 Signed in:', result.user);
-    } catch (error) {
-      console.error('Sign in failed:', error);
-      alert('Sign in failed: ' + error.message);
-    }
-  });
-
-  // Sign out
-  logoutBtn?.addEventListener('click', async () => {
-    try {
-      await window.firebaseSignOut();
-      console.log('🔥 Signed out');
-    } catch (error) {
-      console.error('Sign out failed:', error);
-    }
-  });
-
-  // Auth state listener
-  window.firebaseOnAuthStateChanged((user) => {
-    currentUser = user;
-    isSignedIn = !!user;
-    
+  window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
     if (user) {
+      appData.syncStatus.user = {
+        uid: user.uid,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        email: user.email
+      };
+      
       loginBtn.style.display = 'none';
       userInfo.style.display = 'flex';
-      userAvatar.src = user.photoURL || 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+      userAvatar.src = user.photoURL || '';
       userAvatar.alt = user.displayName || 'User';
-      console.log('🔥 User authenticated:', user.displayName);
       
-      // Load user data
-      loadUserData();
+      startFirebaseSync(user.uid);
+      updateSyncStatus('🔥 Synced with Firebase', true);
+      
     } else {
+      appData.syncStatus.user = null;
+      
       loginBtn.style.display = 'block';
       userInfo.style.display = 'none';
-      console.log('🔥 User signed out');
+      
+      stopFirebaseSync();
+      updateSyncStatus('📱 Local mode', false);
     }
+  });
+  
+  if (loginBtn) {
+    loginBtn.addEventListener('click', signInWithGitHub);
+  }
+  
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', signOutUser);
+  }
+  
+  console.log('🔐 Firebase auth initialized');
+}
+
+async function signInWithGitHub() {
+  try {
+    const provider = new window.firebaseGithubAuthProvider();
+    provider.addScope('user:email');
+    
+    showNotification('🔐 Signing in...', 'info');
+    
+    await window.firebaseSignInWithPopup(window.firebaseAuth, provider);
+    showNotification('✅ Signed in!', 'success');
+    
+  } catch (error) {
+    console.error('❌ Sign in failed:', error);
+    showNotification('❌ Sign in failed', 'error');
+  }
+}
+
+async function signOutUser() {
+  try {
+    await window.firebaseSignOut(window.firebaseAuth);
+    showNotification('👋 Signed out', 'info');
+  } catch (error) {
+    console.error('❌ Sign out failed:', error);
+  }
+}
+
+function startFirebaseSync(userId) {
+  if (!window.firebaseDb || !userId) return;
+  
+  console.log('🔄 Starting Firebase sync...');
+  
+  const userDocRef = window.firebaseDoc(window.firebaseDb, 'users', userId, 'data', 'appData');
+  
+  firebaseUnsubscribe = window.firebaseOnSnapshot(userDocRef, (doc) => {
+    if (isUpdatingFromFirebase) return;
+    
+    if (doc.exists()) {
+      const cloudData = doc.data();
+      
+      const cloudTime = new Date(cloudData.lastUpdated || 0).getTime();
+      const localTime = new Date(appData.lastUpdated || 0).getTime();
+      
+      if (cloudTime > localTime + 1000) {
+        console.log('📥 Receiving data from Firebase...');
+        
+        isUpdatingFromFirebase = true;
+        appData = { ...appData, ...cloudData };
+        
+        updateAllSections();
+        updateCharts();
+        localStorage.setItem('aitashii-powerlifting-data', JSON.stringify(appData));
+        
+        showNotification('📥 Data synced', 'success');
+        isUpdatingFromFirebase = false;
+      }
+    } else {
+      uploadToFirebase(userId);
+    }
+  }, (error) => {
+    console.error('❌ Firebase sync error:', error);
+    updateSyncStatus('❌ Sync error', false);
   });
 }
 
-// Load user data from Firebase
-async function loadUserData() {
-  if (!isSignedIn || !window.firebaseDb) return;
+function stopFirebaseSync() {
+  if (firebaseUnsubscribe) {
+    firebaseUnsubscribe();
+    firebaseUnsubscribe = null;
+    console.log('🛑 Firebase sync stopped');
+  }
+}
+
+async function uploadToFirebase(userId) {
+  if (!window.firebaseDb || !userId || isUpdatingFromFirebase) return;
   
   try {
-    const docRef = window.firebaseDb.collection('users').doc(currentUser.uid);
-    const doc = await docRef.get();
+    const userDocRef = window.firebaseDoc(window.firebaseDb, 'users', userId, 'data', 'appData');
     
-    if (doc.exists) {
-      const userData = doc.data();
-      if (userData.appData) {
-        appData = { ...appData, ...userData.appData };
-        updateAllDateDependencies();
-        updateDashboard();
-        console.log('🔥 User data loaded from cloud');
+    const uploadData = {
+      ...appData,
+      lastUpdated: new Date().toISOString(),
+      syncTimestamp: window.firebaseServerTimestamp()
+    };
+    
+    await window.firebaseSetDoc(userDocRef, uploadData);
+    console.log('✅ Data uploaded to Firebase');
+    
+  } catch (error) {
+    console.error('❌ Firebase upload failed:', error);
+  }
+}
+
+function updateSyncStatus(message, isOnline) {
+  appData.syncStatus.isOnline = isOnline;
+  appData.syncStatus.lastSync = new Date().toISOString();
+  
+  const syncStatus = document.getElementById('sync-status');
+  if (syncStatus) {
+    syncStatus.textContent = message;
+    syncStatus.className = isOnline ? 'sync-status online' : 'sync-status offline';
+  }
+}
+
+// Manual sync function (global)
+window.manualSync = function() {
+  if (!appData.syncStatus.user) {
+    showNotification('❌ Not signed in', 'error');
+    return;
+  }
+  
+  showNotification('🔄 Syncing...', 'info');
+  uploadToFirebase(appData.syncStatus.user.uid);
+  
+  setTimeout(() => {
+    forceRefreshFromFirebase();
+  }, 2000);
+}
+
+async function forceRefreshFromFirebase() {
+  if (!window.firebaseDb || !appData.syncStatus.user) return;
+  
+  try {
+    const userDocRef = window.firebaseDoc(window.firebaseDb, 'users', appData.syncStatus.user.uid, 'data', 'appData');
+    const doc = await window.firebaseGetDoc(userDocRef);
+    
+    if (doc.exists()) {
+      const cloudData = doc.data();
+      
+      if (cloudData.lastUpdated && cloudData.lastUpdated !== appData.lastUpdated) {
+        isUpdatingFromFirebase = true;
+        appData = { ...appData, ...cloudData };
+        
+        updateAllSections();
+        updateCharts();
+        localStorage.setItem('aitashii-powerlifting-data', JSON.stringify(appData));
+        
+        showNotification('✅ Synced!', 'success');
+        isUpdatingFromFirebase = false;
+      } else {
+        showNotification('ℹ️ Data is current', 'info');
       }
     }
   } catch (error) {
-    console.error('Failed to load user data:', error);
+    console.error('❌ Manual refresh failed:', error);
+    showNotification('❌ Sync failed', 'error');
   }
 }
 
-// Save user data to Firebase
-async function saveUserData() {
-  if (!isSignedIn || !window.firebaseDb) return;
+// ==== DATA MANAGEMENT ====
+
+function loadDataFromStorage() {
+  try {
+    const savedData = localStorage.getItem('aitashii-powerlifting-data');
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      appData = { ...appData, ...parsed };
+      console.log('📱 Data loaded from localStorage');
+    }
+  } catch (error) {
+    console.error('❌ Error loading data:', error);
+  }
+}
+
+function saveDataToStorage() {
+  if (isUpdatingFromFirebase) return;
   
   try {
-    const docRef = window.firebaseDb.collection('users').doc(currentUser.uid);
-    await docRef.set({
-      appData: appData,
-      lastUpdated: window.firebaseServerTimestamp()
-    }, { merge: true });
+    appData.lastUpdated = new Date().toISOString();
+    localStorage.setItem('aitashii-powerlifting-data', JSON.stringify(appData));
     
-    console.log('🔥 User data saved to cloud');
+    if (appData.syncStatus.user && !isUpdatingFromFirebase) {
+      uploadToFirebase(appData.syncStatus.user.uid);
+    }
+    
   } catch (error) {
-    console.error('Failed to save user data:', error);
+    console.error('❌ Error saving data:', error);
   }
 }
 
-// Manual sync function
-function manualSync() {
-  if (isSignedIn) {
-    saveUserData();
-    alert('💾 Data synced to cloud!');
+// ==== NAVIGATION ====
+
+function initializeNavigation() {
+  console.log('🧭 Initializing navigation...');
+  
+  // Desktop navigation
+  const navTabs = document.querySelectorAll('.nav-tab');
+  navTabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+      const section = this.getAttribute('data-section');
+      showSection(section);
+      
+      // Update active state
+      navTabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+  
+  // Mobile navigation
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const closeMenuBtn = document.getElementById('close-menu-btn');
+  const menuOverlay = document.getElementById('menu-overlay');
+  const slidingMenu = document.getElementById('sliding-menu');
+  const menuItems = document.querySelectorAll('.menu-item');
+  
+  if (hamburgerBtn) {
+    hamburgerBtn.addEventListener('click', () => {
+      slidingMenu.classList.add('active');
+      menuOverlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+  
+  if (closeMenuBtn) {
+    closeMenuBtn.addEventListener('click', closeMenu);
+  }
+  
+  if (menuOverlay) {
+    menuOverlay.addEventListener('click', closeMenu);
+  }
+  
+  menuItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const section = this.getAttribute('data-section');
+      showSection(section);
+      closeMenu();
+      
+      menuItems.forEach(mi => mi.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+  
+  function closeMenu() {
+    slidingMenu.classList.remove('active');
+    menuOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+  
+  console.log('🧭 Navigation initialized');
+}
+
+function showSection(sectionName) {
+  const sections = document.querySelectorAll('.section');
+  sections.forEach(section => {
+    section.classList.remove('section--active');
+  });
+  
+  const targetSection = document.getElementById(sectionName);
+  if (targetSection) {
+    targetSection.classList.add('section--active');
+  }
+  
+  // Update specific sections when they become active
+  if (sectionName === 'progress' && charts.prChart) {
+    setTimeout(() => {
+      charts.prChart.resize();
+      if (charts.bodyChart) charts.bodyChart.resize();
+    }, 100);
+  }
+  
+  console.log(`📱 Showing section: ${sectionName}`);
+}
+
+// ==== TIMER SYSTEM ====
+
+function initializeTimers() {
+  console.log('⏰ Initializing timer system...');
+  
+  const startWorkoutBtn = document.getElementById('start-workout-timer');
+  if (startWorkoutBtn) {
+    startWorkoutBtn.addEventListener('click', toggleWorkoutTimer);
+  }
+  
+  console.log('⏰ Timer system initialized');
+}
+
+function toggleWorkoutTimer() {
+  if (workoutTimer.isRunning) {
+    stopWorkoutTimer();
   } else {
-    alert('🔐 Sign in to sync data to cloud');
+    startWorkoutTimer();
   }
 }
 
-// Rest Timer Functions
-function startRestTimer(seconds) {
-  if (isRestTimerRunning) {
+function startWorkoutTimer() {
+  workoutTimer.isRunning = true;
+  workoutTimer.startTime = Date.now() - workoutTimer.elapsed;
+  
+  const startBtn = document.getElementById('start-workout-timer');
+  if (startBtn) {
+    startBtn.textContent = 'Stop Timer';
+    startBtn.classList.add('active');
+  }
+  
+  workoutTimer.interval = setInterval(updateWorkoutTimer, 1000);
+  
+  showNotification('⏰ Workout timer started', 'success');
+}
+
+function stopWorkoutTimer() {
+  workoutTimer.isRunning = false;
+  
+  if (workoutTimer.interval) {
+    clearInterval(workoutTimer.interval);
+    workoutTimer.interval = null;
+  }
+  
+  const startBtn = document.getElementById('start-workout-timer');
+  if (startBtn) {
+    startBtn.textContent = 'Start Timer';
+    startBtn.classList.remove('active');
+  }
+  
+  showNotification('⏹️ Workout timer stopped', 'info');
+}
+
+function updateWorkoutTimer() {
+  workoutTimer.elapsed = Date.now() - workoutTimer.startTime;
+  
+  const hours = Math.floor(workoutTimer.elapsed / 3600000);
+  const minutes = Math.floor((workoutTimer.elapsed % 3600000) / 60000);
+  const seconds = Math.floor((workoutTimer.elapsed % 60000) / 1000);
+  
+  const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  
+  const timerDisplay = document.getElementById('workout-timer');
+  if (timerDisplay) {
+    timerDisplay.textContent = timeString;
+  }
+}
+
+// Rest timer functions (global)
+window.startRestTimer = function(seconds) {
+  if (restTimer.isRunning) {
     stopRestTimer();
   }
   
-  restTimerSeconds = seconds;
-  isRestTimerRunning = true;
+  restTimer.isRunning = true;
+  restTimer.duration = seconds;
+  restTimer.remaining = seconds;
   
-  const modal = document.getElementById('rest-timer-modal');
-  const display = document.getElementById('rest-timer-display');
-  const stopBtn = document.getElementById('stop-rest-timer');
+  const restDisplay = document.getElementById('rest-timer-display');
+  if (restDisplay) {
+    restDisplay.classList.add('active');
+  }
   
-  modal.style.display = 'flex';
+  restTimer.interval = setInterval(updateRestTimer, 1000);
   
-  updateRestTimerDisplay();
+  showNotification(`⏰ Rest timer: ${Math.floor(seconds/60)}:${(seconds%60).toString().padStart(2,'0')}`, 'info');
+}
+
+window.stopRestTimer = function() {
+  restTimer.isRunning = false;
   
-  restTimerInterval = setInterval(() => {
-    restTimerSeconds--;
-    updateRestTimerDisplay();
+  if (restTimer.interval) {
+    clearInterval(restTimer.interval);
+    restTimer.interval = null;
+  }
+  
+  const restDisplay = document.getElementById('rest-timer-display');
+  if (restDisplay) {
+    restDisplay.classList.remove('active');
+  }
+}
+
+function updateRestTimer() {
+  restTimer.remaining--;
+  
+  const minutes = Math.floor(restTimer.remaining / 60);
+  const seconds = restTimer.remaining % 60;
+  const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  
+  const countdown = document.getElementById('rest-timer-countdown');
+  if (countdown) {
+    countdown.textContent = timeString;
+  }
+  
+  if (restTimer.remaining <= 0) {
+    stopRestTimer();
+    showNotification('🔔 Rest time finished!', 'success');
     
-    if (restTimerSeconds <= 0) {
-      stopRestTimer();
-      // Play notification sound or vibrate
-      if ('vibrate' in navigator) {
-        navigator.vibrate([200, 100, 200]);
-      }
-      alert('⏰ Rest time completed!');
+    // Vibrate if supported
+    if (navigator.vibrate) {
+      navigator.vibrate([200, 100, 200, 100, 200]);
     }
-  }, 1000);
-  
-  stopBtn.onclick = stopRestTimer;
+  }
 }
 
-function stopRestTimer() {
-  isRestTimerRunning = false;
-  clearInterval(restTimerInterval);
-  document.getElementById('rest-timer-modal').style.display = 'none';
-}
+// ==== DASHBOARD UPDATES ====
 
-function updateRestTimerDisplay() {
-  const display = document.getElementById('rest-timer-display');
-  if (!display) return;
-  
-  const minutes = Math.floor(restTimerSeconds / 60);
-  const seconds = restTimerSeconds % 60;
-  
-  display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
-
-// NEW: Dynamic Date System Functions
-function initializeDateControl() {
-  const datePicker = document.getElementById('date-picker');
-  const updateBtn = document.getElementById('update-date-btn');
-  
-  if (!datePicker || !updateBtn) return;
-  
-  // Set initial date
-  datePicker.value = appData.currentDate;
-  
-  // Update date when button is clicked
-  updateBtn.addEventListener('click', () => {
-    const newDate = datePicker.value;
-    if (newDate) {
-      updateCurrentDate(newDate);
-    }
-  });
-  
-  // Also update on date input change
-  datePicker.addEventListener('change', () => {
-    const newDate = datePicker.value;
-    if (newDate) {
-      updateCurrentDate(newDate);
-    }
-  });
-}
-
-function updateCurrentDate(newDateString) {
-  appData.currentDate = newDateString;
-  
-  // Increment backup counter and trigger backup if needed
-  incrementBackupCounter();
-  
-  // Update all date-dependent systems
-  updateAllDateDependencies();
-  
-  // Update dashboard
+function updateAllSections() {
   updateDashboard();
-  
-  // Show confirmation
-  const dateObj = new Date(newDateString + 'T00:00:00');
-  const formattedDate = formatDateFull(dateObj);
-  
-  console.log(`Date updated to: ${formattedDate}`);
-  
-  // Update all displays immediately
-  updateCurrentDateDisplay();
-  
-  // Save to cloud if signed in
-  if (isSignedIn) {
-    saveUserData();
-  }
+  updateTodaysWorkout();
+  updateTrainingSchedule();
+  updateMeasurementsDisplay();
+  updateCycleDisplay();
+  updateNutritionDisplay();
+  updateDataSummary();
 }
 
-function updateAllDateDependencies() {
-  console.log('Updating all date dependencies for:', appData.currentDate);
-  
-  // Update all systems that depend on the current date
-  updateCurrentDateDisplay();
-  updateTrainingPhase();
-  updateDailyWorkout();
-  updateMenstrualCycleCalculations();
-  updateProgressTimelines();
-  updateCompetitionCountdown();
-  updateNutritionForDay();
-  updateWeeklyProgressDisplay();
+function updateDashboard() {
+  updatePRCards();
+  updateBodyCompositionCard();
+  updateTodaysWorkoutCard();
+  updateCycleCard();
+  updateWeeklyProgressCard();
+  updateNutritionCard();
+  updateTechCard();
+  updateCompetitionCard();
 }
 
-function updateCurrentDateDisplay() {
-  const currentDate = new Date(appData.currentDate + 'T00:00:00');
-  const formattedDate = formatDateFull(currentDate);
-  
-  // Update main date display
-  const currentDateText = document.getElementById('current-date-text');
-  if (currentDateText) {
-    currentDateText.textContent = formattedDate;
+function updatePRCards() {
+  // Current phase
+  const currentPhase = getCurrentTrainingPhase();
+  const phaseBadge = document.getElementById('current-phase-badge');
+  if (phaseBadge && currentPhase) {
+    phaseBadge.textContent = `Phase ${getPhaseNumber(currentPhase)}: ${currentPhase.name.split(' ')[0]}`;
   }
   
-  // Update navigation date
-  const navDate = document.getElementById('nav-date');
-  if (navDate) {
-    navDate.textContent = formattedDate;
-  }
-  
-  // Update workout section title
-  const workoutTitle = document.getElementById('workout-section-title');
-  if (workoutTitle) {
-    workoutTitle.textContent = `Today's Workout - ${formattedDate}`;
-  }
-}
-
-function calculateCurrentPhase() {
-  const currentDate = new Date(appData.currentDate + 'T00:00:00');
-  
-  for (const [phaseKey, phase] of Object.entries(appData.trainingPhases)) {
-    const startDate = new Date(phase.startDate + 'T00:00:00');
-    const endDate = new Date(phase.endDate + 'T00:00:00');
-    
-    if (currentDate >= startDate && currentDate <= endDate) {
-      return {
-        key: phaseKey,
-        phase: phase,
-        status: 'CURRENT'
-      };
-    }
-  }
-  
-  // If no current phase, check which is upcoming
-  const sortedPhases = Object.entries(appData.trainingPhases).sort((a, b) => 
-    new Date(a[1].startDate) - new Date(b[1].startDate)
-  );
-  
-  for (const [phaseKey, phase] of sortedPhases) {
-    const startDate = new Date(phase.startDate + 'T00:00:00');
-    if (currentDate < startDate) {
-      return {
-        key: phaseKey,
-        phase: phase,
-        status: 'UPCOMING'
-      };
-    }
-  }
-  
-  // All phases completed
-  return {
-    key: 'phase4',
-    phase: appData.trainingPhases.phase4,
-    status: 'COMPLETED'
-  };
-}
-
-function updateTrainingPhase() {
-  const currentPhaseInfo = calculateCurrentPhase();
-  
-  // Update phase status displays
-  const phaseStatus = document.getElementById('current-phase-status');
-  if (phaseStatus) {
-    phaseStatus.textContent = `Phase ${currentPhaseInfo.key.charAt(5)}: ${currentPhaseInfo.phase.name}`;
-    
-    // Update status class
-    phaseStatus.className = 'status';
-    if (currentPhaseInfo.status === 'CURRENT') {
-      phaseStatus.classList.add('status--success');
-    } else if (currentPhaseInfo.status === 'UPCOMING') {
-      phaseStatus.classList.add('status--warning');
-    } else {
-      phaseStatus.classList.add('status--info');
-    }
-  }
-  
-  // Update workout phase status
-  const workoutPhaseStatus = document.getElementById('workout-phase-status');
-  if (workoutPhaseStatus) {
-    workoutPhaseStatus.textContent = `Phase ${currentPhaseInfo.key.charAt(5)}: ${currentPhaseInfo.phase.name}`;
-    workoutPhaseStatus.className = 'status';
-    if (currentPhaseInfo.status === 'CURRENT') {
-      workoutPhaseStatus.classList.add('status--success');
-    } else {
-      workoutPhaseStatus.classList.add('status--warning');
-    }
-  }
-  
-  // Update phases timeline in progress section
-  updatePhasesTimeline(currentPhaseInfo);
-}
-
-function updatePhasesTimeline(currentPhaseInfo) {
-  const phasesTimeline = document.getElementById('phases-timeline');
-  if (!phasesTimeline) return;
-  
-  const phaseItems = phasesTimeline.querySelectorAll('.phase-item');
-  const currentDate = new Date(appData.currentDate + 'T00:00:00');
-  
-  phaseItems.forEach((item, index) => {
-    const phaseKey = `phase${index + 1}`;
-    const phase = appData.trainingPhases[phaseKey];
-    
-    // Reset classes
-    item.className = 'phase-item';
-    
-    const startDate = new Date(phase.startDate + 'T00:00:00');
-    const endDate = new Date(phase.endDate + 'T00:00:00');
-    
-    if (phaseKey === currentPhaseInfo.key && currentPhaseInfo.status === 'CURRENT') {
-      item.classList.add('active');
+  // PR values
+  const exercises = ['squat', 'bench', 'deadlift'];
+  exercises.forEach(exercise => {
+    const pr = appData.currentPRs[exercise];
+    if (pr) {
+      const valueEl = document.getElementById(`${exercise}-pr-value`);
+      const dateEl = document.getElementById(`${exercise}-pr-date`);
       
-      // Calculate week progress
-      const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-      const daysPassed = Math.ceil((currentDate - startDate) / (1000 * 60 * 60 * 24));
-      const progress = Math.min(100, Math.max(0, (daysPassed / totalDays) * 100));
+      if (valueEl) {
+        valueEl.textContent = pr.reps > 1 ? `${pr.weight}kg x${pr.reps}` : `${pr.weight}kg x1`;
+      }
       
-      const progressFill = item.querySelector('.progress-fill');
-      const progressText = item.querySelector('.phase-progress span');
-      if (progressFill) progressFill.style.width = `${progress}%`;
-      if (progressText) {
-        const currentWeek = Math.ceil(daysPassed / 7);
-        const totalWeeks = Math.ceil(totalDays / 7);
-        progressText.textContent = `Week ${currentWeek}/${totalWeeks} - CURRENT PHASE`;
-      }
-    } else if (currentDate > endDate) {
-      item.classList.add('completed');
-      const statusEl = item.querySelector('.phase-status .status');
-      if (statusEl) {
-        statusEl.textContent = 'COMPLETED';
-        statusEl.className = 'status status--success';
-      }
-    } else {
-      const statusEl = item.querySelector('.phase-status .status');
-      if (statusEl) {
-        statusEl.textContent = 'UPCOMING';
-        statusEl.className = 'status status--warning';
+      if (dateEl) {
+        dateEl.textContent = formatDateShort(pr.date);
       }
     }
   });
 }
 
-function updateDailyWorkout() {
-  const currentDate = new Date(appData.currentDate + 'T00:00:00');
-  const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-  const currentPhase = calculateCurrentPhase();
-  
-  // Map day of week to English names
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const dayName = dayNames[dayOfWeek];
-  
-  // Check if it's a training day (Monday-Thursday + Saturday-Sunday)
-  const isTrainingDay = dayOfWeek >= 1 && dayOfWeek <= 4 || dayOfWeek === 6 || dayOfWeek === 0;
-  const isRestDay = dayOfWeek === 5; // Friday
-  
-  // Update workout day status
-  const workoutDayStatus = document.getElementById('workout-day-status');
-  if (workoutDayStatus) {
-    if (isRestDay) {
-      workoutDayStatus.textContent = 'REST/MOBILITY';
-      workoutDayStatus.className = 'status status--info';
-    } else if (isTrainingDay) {
-      workoutDayStatus.textContent = '6xSBD';
-      workoutDayStatus.className = 'status status--warning';
-    }
+function updateBodyCompositionCard() {
+  // Update target badge
+  const targetBadge = document.querySelector('.target-badge');
+  if (targetBadge) {
+    targetBadge.textContent = `${appData.bodyGoals.current.weight}kg → ${appData.bodyGoals.target.weight}kg`;
   }
   
-  // Update workout week info
-  const workoutWeekInfo = document.getElementById('workout-week-info');
-  if (workoutWeekInfo && currentPhase.status === 'CURRENT') {
-    const phaseStart = new Date(currentPhase.phase.startDate + 'T00:00:00');
-    const daysSinceStart = Math.ceil((currentDate - phaseStart) / (1000 * 60 * 60 * 24));
-    const currentWeek = Math.ceil(daysSinceStart / 7);
-    const totalWeeks = parseInt(currentPhase.phase.duration.split(' ')[0]);
-    const dayOfPhase = ((daysSinceStart - 1) % 7) + 1;
-    
-    workoutWeekInfo.textContent = `Week ${currentWeek}/${totalWeeks} | Day ${dayOfPhase}/7`;
-  }
-  
-  // Update training calculations based on current phase
-  updateWorkoutWeights();
+  // Values are already set in HTML, but we could update them dynamically here if needed
 }
 
-function updateMenstrualCycleCalculations() {
-  const currentDate = new Date(appData.currentDate + 'T00:00:00');
-  const lastPeriod = new Date(appData.menstrualCycle.lastPeriod + 'T00:00:00');
-  const daysSincePeriod = Math.floor((currentDate - lastPeriod) / (1000 * 60 * 60 * 24));
-  const cycleDay = (daysSincePeriod % appData.menstrualCycle.cycleLength) + 1;
-
-  let phase, phaseClass, recommendations, energy;
+function updateTodaysWorkoutCard() {
+  const currentDate = new Date(appData.currentDate);
+  const dayOfWeek = currentDate.getDay();
+  const isRestDay = dayOfWeek === 5; // Friday
   
-  if (cycleDay <= 5) {
-    phase = "Menstruation";
-    phaseClass = "status--error";
-    energy = "Low";
-    recommendations = [
-      "⚠️ Decreased training energy",
-      "⚠️ Focus on lighter loads",
-      "✓ Priority on recovery"
-    ];
-  } else if (cycleDay <= 13) {
-    phase = "Follicular Phase";
-    phaseClass = "status--info"; 
-    energy = "High";
-    recommendations = [
-      "✓ High training energy",
-      "✓ Good load tolerance", 
-      "✓ Fast recovery"
-    ];
-  } else if (cycleDay <= 16) {
-    phase = "Ovulation";
-    phaseClass = "status--success";
-    energy = "Peak";
-    recommendations = [
-      "✓ Peak strength",
-      "✓ Optimal PR attempts",
-      "✓ Maximum capacity"
-    ];
+  const dayBadge = document.getElementById('day-type-badge');
+  const workoutSummary = document.getElementById('workout-summary');
+  
+  if (isRestDay) {
+    if (dayBadge) {
+      dayBadge.textContent = 'Rest Day';
+      dayBadge.className = 'day-badge rest';
+    }
+    
+    if (workoutSummary) {
+      workoutSummary.innerHTML = `
+        <div class="workout-exercise">
+          <span class="exercise-name">Mobility & Stretching</span>
+        </div>
+        <div class="workout-exercise">
+          <span class="exercise-name">Adductor focus work</span>
+        </div>
+        <div class="workout-exercise">
+          <span class="exercise-name">Recovery activities</span>
+        </div>
+      `;
+    }
   } else {
-    phase = "Luteal Phase";
-    phaseClass = "status--warning";
-    energy = "Declining";
-    recommendations = [
-      "⚠️ Gradually declining energy",
-      "✓ Focus on technique", 
-      "⚠️ Greater need for rest"
-    ];
+    if (dayBadge) {
+      dayBadge.textContent = 'Training Day';
+      dayBadge.className = 'day-badge training';
+    }
+    
+    const currentPhase = getCurrentTrainingPhase();
+    if (currentPhase && workoutSummary) {
+      const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * currentPhase.exercises.squat.intensity);
+      const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * currentPhase.exercises.bench.intensity);
+      const deadliftWeight = Math.round(appData.currentPRs.deadlift.estimated1RM * currentPhase.exercises.deadlift.intensity);
+      
+      workoutSummary.innerHTML = `
+        <div class="workout-exercise">
+          <span class="exercise-name">Squat: ${currentPhase.exercises.squat.sets}x${currentPhase.exercises.squat.reps} @ ${squatWeight}kg (${Math.round(currentPhase.exercises.squat.intensity*100)}%)</span>
+        </div>
+        <div class="workout-exercise">
+          <span class="exercise-name">Bench: ${currentPhase.exercises.bench.sets}x${currentPhase.exercises.bench.reps} @ ${benchWeight}kg (${Math.round(currentPhase.exercises.bench.intensity*100)}%)</span>
+        </div>
+        <div class="workout-exercise">
+          <span class="exercise-name">Deadlift: ${currentPhase.exercises.deadlift.sets}x${currentPhase.exercises.deadlift.reps} @ ${deadliftWeight}kg (${Math.round(currentPhase.exercises.deadlift.intensity*100)}%)</span>
+        </div>
+        <div class="workout-exercise priority">
+          <span class="exercise-name">Accessories: ${currentPhase.accessories[0]}</span>
+        </div>
+      `;
+    }
   }
+}
 
-  // Update all cycle displays
-  const elements = {
-    'cycle-phase': { text: phase, className: `status ${phaseClass}` },
-    'cycle-day': { text: cycleDay },
-    'training-energy': { text: energy },
-    'last-period': { text: formatDate(appData.menstrualCycle.lastPeriod) },
-    'days-since-period': { text: `${daysSincePeriod} days` },
-    'phase-name': { text: phase },
-    'cycle-day-display': { text: `Day ${cycleDay}` }
-  };
+function updateCycleCard() {
+  const currentDate = new Date(appData.currentDate);
+  const lastPeriodStart = new Date(appData.menstrualCycle.lastPeriodStart);
+  const daysSinceLastPeriod = Math.floor((currentDate - lastPeriodStart) / (1000 * 60 * 60 * 24));
+  const cycleDay = (daysSinceLastPeriod % appData.menstrualCycle.cycleLength) + 1;
+  
+  let phase, energy;
+  
+  if (cycleDay <= appData.menstrualCycle.periodLength) {
+    phase = "Menstrual";
+    energy = "Low";
+  } else if (cycleDay <= 14) {
+    phase = "Follicular";
+    energy = "High";
+  } else if (cycleDay <= 21) {
+    phase = "Luteal Early";
+    energy = "High";
+  } else {
+    phase = "Luteal Late";
+    energy = "Medium";
+  }
+  
+  const phaseBadge = document.getElementById('cycle-phase-badge');
+  const cycleDayValue = document.getElementById('cycle-day-value');
+  const trainingEnergy = document.getElementById('training-energy');
+  const lastPeriodDate = document.getElementById('last-period-date');
+  
+  if (phaseBadge) {
+    phaseBadge.textContent = `${phase} Phase`;
+    phaseBadge.className = `phase-badge ${phase.toLowerCase().replace(' ', '-')}`;
+  }
+  
+  if (cycleDayValue) cycleDayValue.textContent = cycleDay;
+  if (trainingEnergy) {
+    trainingEnergy.textContent = energy;
+    trainingEnergy.className = `cycle-value ${energy.toLowerCase()}`;
+  }
+  if (lastPeriodDate) lastPeriodDate.textContent = formatDateShort(appData.menstrualCycle.lastPeriodStart);
+}
 
-  Object.entries(elements).forEach(([id, config]) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.textContent = config.text;
-      if (config.className) {
-        element.className = config.className;
+function updateWeeklyProgressCard() {
+  // This is mostly static data for now, but could be made dynamic
+  const progressCircles = document.querySelectorAll('.progress-circle');
+  const completedSessions = appData.weeklyProgress.completedSessions;
+  
+  progressCircles.forEach((circle, index) => {
+    if (index < completedSessions.length) {
+      if (completedSessions[index]) {
+        circle.classList.add('completed');
+        circle.classList.remove('rest');
+      } else if (index === 4) { // Friday is rest day
+        circle.classList.add('rest');
+        circle.classList.remove('completed');
       }
     }
   });
+}
 
-  // Update recommendations
-  const trainingRecs = document.getElementById('training-recs');
-  if (trainingRecs) {
-    trainingRecs.innerHTML = '';
-    recommendations.forEach(rec => {
-      const div = document.createElement('div');
-      div.className = 'rec-item';
-      div.textContent = rec;
-      trainingRecs.appendChild(div);
-    });
+function updateNutritionCard() {
+  const currentDate = new Date(appData.currentDate);
+  const dayOfWeek = currentDate.getDay();
+  const isRestDay = dayOfWeek === 5;
+  
+  const nutritionDayBadge = document.getElementById('nutrition-day-badge');
+  
+  if (nutritionDayBadge) {
+    if (isRestDay) {
+      nutritionDayBadge.textContent = 'Rest Day';
+      nutritionDayBadge.className = 'day-badge rest';
+    } else {
+      nutritionDayBadge.textContent = 'Training Day';
+      nutritionDayBadge.className = 'day-badge training';
+    }
   }
-
-  generateCycleCalendar();
+  
+  // Update nutrition values based on training day
+  const nutritionItems = document.querySelectorAll('.nutrition-item .nutrition-value');
+  if (nutritionItems.length >= 3) {
+    if (isRestDay) {
+      nutritionItems[0].textContent = '2200'; // Calories
+      nutritionItems[1].textContent = '160g'; // Protein
+      nutritionItems[2].textContent = '250g'; // Carbs
+    } else {
+      nutritionItems[0].textContent = '2500'; // Calories
+      nutritionItems[1].textContent = '180g'; // Protein
+      nutritionItems[2].textContent = '280g'; // Carbs
+    }
+  }
 }
 
-function updateCompetitionCountdown() {
-  const currentDate = new Date(appData.currentDate + 'T00:00:00');
-  const competitionDate = new Date(appData.competitionInfo.targetDate + 'T00:00:00');
-  
-  const timeDiff = competitionDate - currentDate;
-  const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-  const weeksDiff = Math.ceil(daysDiff / 7);
-  
-  // Update countdown displays
-  const daysElement = document.getElementById('days-to-competition');
-  const weeksElement = document.getElementById('weeks-to-competition');
-  
-  if (daysElement) daysElement.textContent = Math.max(0, daysDiff);
-  if (weeksElement) weeksElement.textContent = Math.max(0, weeksDiff);
+function updateTechCard() {
+  // Static for now - could be made dynamic based on performance metrics
 }
 
-function updateProgressTimelines() {
-  // Update "X days ago" displays for measurements
-  const latestMeasurement = appData.measurements[appData.measurements.length - 1];
-  if (latestMeasurement) {
-    const currentDate = new Date(appData.currentDate + 'T00:00:00');
-    const measurementDate = new Date(latestMeasurement.date + 'T00:00:00');
-    const daysSince = Math.floor((currentDate - measurementDate) / (1000 * 60 * 60 * 24));
+function updateCompetitionCard() {
+  const currentDate = new Date(appData.currentDate);
+  const competitionDate = new Date('2026-03-30');
+  const daysToCompetition = Math.ceil((competitionDate - currentDate) / (1000 * 60 * 60 * 24));
+  const weeksToCompetition = Math.ceil(daysToCompetition / 7);
+  
+  const countdownNumber = document.querySelector('.countdown-number');
+  const countdownSecondary = document.querySelectorAll('.countdown-number')[1];
+  
+  if (countdownNumber) countdownNumber.textContent = daysToCompetition;
+  if (countdownSecondary) countdownSecondary.textContent = weeksToCompetition;
+}
+
+function updateTodaysWorkout() {
+  // Update the detailed today's workout section
+  const currentDate = new Date(appData.currentDate);
+  const currentPhase = getCurrentTrainingPhase();
+  
+  if (currentPhase) {
+    // Update intensities in the workout section
+    const intensityBadges = document.querySelectorAll('.intensity-badge');
+    if (intensityBadges.length >= 2) {
+      const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * currentPhase.exercises.squat.intensity);
+      const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * currentPhase.exercises.bench.intensity);
+      
+      intensityBadges[0].textContent = `70% (${squatWeight}kg)`;
+      intensityBadges[1].textContent = `65% (${benchWeight}kg)`;
+    }
+  }
+}
+
+function updateTrainingSchedule() {
+  // Update active day in calendar
+  const currentDate = new Date(appData.currentDate);
+  const currentDay = currentDate.getDay();
+  
+  const dayCards = document.querySelectorAll('.day-card');
+  dayCards.forEach((card, index) => {
+    card.classList.remove('active');
+    if (index === currentDay) {
+      card.classList.add('active');
+    }
+  });
+}
+
+function updateMeasurementsDisplay() {
+  const currentStats = document.getElementById('current-stats');
+  if (currentStats && appData.measurements.length > 0) {
+    const latest = appData.measurements[appData.measurements.length - 1];
     
-    console.log(`Days since last measurement: ${daysSince}`);
+    currentStats.innerHTML = `
+      <div class="stat-item">
+        <div class="stat-label">Weight</div>
+        <div class="stat-value">${latest.weight}kg</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Body Fat</div>
+        <div class="stat-value">${latest.bodyFat}%</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Muscle Mass</div>
+        <div class="stat-value">${latest.muscle}kg</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Fat Mass</div>
+        <div class="stat-value">${latest.fatMass}kg</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Body Water</div>
+        <div class="stat-value">${latest.bodyWater}kg</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">Last Updated</div>
+        <div class="stat-value">${formatDateShort(latest.date)}</div>
+      </div>
+    `;
   }
 }
 
-function updateNutritionForDay() {
-  const currentDate = new Date(appData.currentDate + 'T00:00:00');
-  const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+function updateCycleDisplay() {
+  const cycleStatus = document.getElementById('cycle-status');
+  if (cycleStatus) {
+    const currentDate = new Date(appData.currentDate);
+    const lastPeriodStart = new Date(appData.menstrualCycle.lastPeriodStart);
+    const daysSinceLastPeriod = Math.floor((currentDate - lastPeriodStart) / (1000 * 60 * 60 * 24));
+    const cycleDay = (daysSinceLastPeriod % appData.menstrualCycle.cycleLength) + 1;
+    
+    let phase, recommendation;
+    
+    if (cycleDay <= appData.menstrualCycle.periodLength) {
+      phase = "Menstrual";
+      recommendation = "Light training, listen to your body 🌙";
+    } else if (cycleDay <= 14) {
+      phase = "Follicular";
+      recommendation = "High energy - great time for intense training! 💪";
+    } else if (cycleDay <= 21) {
+      phase = "Luteal Early";
+      recommendation = "Optimal strength - perfect for heavy lifts! 🏋️‍♀️";
+    } else {
+      phase = "Luteal Late";
+      recommendation = "May feel harder - focus on technique and volume 🎯";
+    }
+    
+    cycleStatus.innerHTML = `
+      <div class="cycle-item">
+        <div class="cycle-label">Current Phase</div>
+        <div class="cycle-value">${phase}</div>
+      </div>
+      <div class="cycle-item">
+        <div class="cycle-label">Cycle Day</div>
+        <div class="cycle-value">${cycleDay}/28</div>
+      </div>
+      <div class="cycle-item">
+        <div class="cycle-label">Days Since Period</div>
+        <div class="cycle-value">${daysSinceLastPeriod} days</div>
+      </div>
+      <div class="cycle-recommendation">
+        <strong>Training Recommendation:</strong><br>
+        ${recommendation}
+      </div>
+    `;
+  }
+}
+
+function updateNutritionDisplay() {
+  const nutritionTargets = document.getElementById('nutrition-targets-detailed');
+  if (nutritionTargets) {
+    const currentDate = new Date(appData.currentDate);
+    const dayOfWeek = currentDate.getDay();
+    const isRestDay = dayOfWeek === 5;
+    
+    const calories = isRestDay ? 2200 : 2500;
+    const protein = isRestDay ? 160 : 180;
+    const carbs = isRestDay ? 250 : 280;
+    const fat = isRestDay ? 70 : 85;
+    
+    nutritionTargets.innerHTML = `
+      <div class="nutrition-grid">
+        <div class="nutrition-item">
+          <div class="nutrition-label">Calories</div>
+          <div class="nutrition-value">${calories} kcal</div>
+        </div>
+        <div class="nutrition-item">
+          <div class="nutrition-label">Protein</div>
+          <div class="nutrition-value">${protein}g</div>
+        </div>
+        <div class="nutrition-item">
+          <div class="nutrition-label">Carbs</div>
+          <div class="nutrition-value">${carbs}g</div>
+        </div>
+        <div class="nutrition-item">
+          <div class="nutrition-label">Fat</div>
+          <div class="nutrition-value">${fat}g</div>
+        </div>
+      </div>
+      
+      <div class="nutrition-tips">
+        <h4>${isRestDay ? 'Rest Day Tips' : 'Training Day Tips'}</h4>
+        <p>${isRestDay ? 
+          'Maintain stable blood sugar. Focus on quality protein sources and healthy fats.' :
+          'Increase carb intake 2-3h before training. Post-workout: 25-30g protein + simple carbs.'
+        }</p>
+        <div class="shake-info">
+          <strong>My protein shake:</strong> 278 kcal, 53.5g protein
+        </div>
+      </div>
+    `;
+  }
   
-  // Check if it's a training day
-  const isTrainingDay = (dayOfWeek >= 1 && dayOfWeek <= 4) || dayOfWeek === 6 || dayOfWeek === 0;
-  const isRestDay = dayOfWeek === 5; // Friday
-  
-  // Update nutrition day type
+  // Update day type badge
   const nutritionDayType = document.getElementById('nutrition-day-type');
   if (nutritionDayType) {
-    if (isRestDay) {
-      nutritionDayType.textContent = 'Rest Day';
-      nutritionDayType.className = 'status status--info';
-    } else {
-      nutritionDayType.textContent = 'Training Day'; 
-      nutritionDayType.className = 'status status--warning';
-    }
-  }
-  
-  // Update macro targets based on day type
-  const calories = isRestDay ? '2200' : '2500';
-  const protein = isRestDay ? '160g' : '180g';
-  const carbs = isRestDay ? '250g' : '280g';
-  
-  const dailyCalories = document.getElementById('daily-calories');
-  const dailyProtein = document.getElementById('daily-protein');  
-  const dailyCarbs = document.getElementById('daily-carbs');
-  const nutritionCalories = document.getElementById('nutrition-calories');
-  const nutritionProtein = document.getElementById('nutrition-protein');
-  const nutritionCarbs = document.getElementById('nutrition-carbs');
-  
-  if (dailyCalories) dailyCalories.textContent = calories;
-  if (dailyProtein) dailyProtein.textContent = protein;
-  if (dailyCarbs) dailyCarbs.textContent = carbs;
-  if (nutritionCalories) nutritionCalories.textContent = calories + ' kcal';
-  if (nutritionProtein) nutritionProtein.textContent = protein;
-  if (nutritionCarbs) nutritionCarbs.textContent = carbs;
-  
-  // Update nutrition targets title
-  const nutritionTitle = document.getElementById('nutrition-targets-title');
-  if (nutritionTitle) {
-    const dayType = isRestDay ? 'Rest Day' : 'Training Day';
-    nutritionTitle.textContent = `Today's Goals - ${dayType}`;
-  }
-  
-  // Update weekly schedule highlights
-  updateNutritionWeekSchedule(dayOfWeek);
-}
-
-function updateNutritionWeekSchedule(currentDayOfWeek) {
-  const scheduleGrid = document.getElementById('nutrition-week-schedule');
-  if (!scheduleGrid) return;
-  
-  const dayElements = scheduleGrid.querySelectorAll('.day-nutrition');
-  
-  dayElements.forEach((element, index) => {
-    // Reset classes
-    element.className = 'day-nutrition';
-    
-    // Monday = index 0, Sunday = index 6
-    const dayOfWeek = index === 6 ? 0 : index + 1; // Convert to JS day numbering
-    
-    if (dayOfWeek === currentDayOfWeek) {
-      element.classList.add('active');
-    } else if (dayOfWeek === 5) { // Friday
-      element.classList.add('rest');
-    }
-  });
-}
-
-function updateWeeklyProgressDisplay() {
-  const currentDate = new Date(appData.currentDate + 'T00:00:00');
-  const dayOfWeek = currentDate.getDay();
-  
-  const weeklyStats = document.getElementById('weekly-stats');
-  if (!weeklyStats) return;
-  
-  const dayIndicators = weeklyStats.querySelectorAll('.day-indicator');
-  
-  // Map indicators to days: Mon, Tue, Wed, Thu, Fri, Sat, Sun
-  const dayMapping = [1, 2, 3, 4, 5, 6, 0]; // Convert to JS day numbering
-  
-  dayIndicators.forEach((indicator, index) => {
-    indicator.className = 'day-indicator';
-    
-    const indicatorDay = dayMapping[index];
-    
-    if (indicatorDay === dayOfWeek) {
-      indicator.classList.add('active');
-    } else if (indicatorDay === 5) { // Friday is always rest
-      indicator.classList.add('rest');  
-    } else {
-      // For demo, show most days as completed
-      if (index < 5) {
-        indicator.classList.add('completed');
-      }
-    }
-  });
-}
-
-// NEW: Auto-backup system with 3 changes
-function incrementBackupCounter() {
-  appData.autoBackup.changesCount++;
-  updateAutoBackupDisplay();
-  
-  if (appData.autoBackup.changesCount >= appData.autoBackup.maxChanges) {
-    triggerAutoBackup();
+    const isRestDay = new Date(appData.currentDate).getDay() === 5;
+    nutritionDayType.textContent = isRestDay ? 'Rest Day' : 'Training Day';
+    nutritionDayType.className = isRestDay ? 'day-badge rest' : 'day-badge training';
   }
 }
 
-function updateAutoBackupDisplay() {
-  const backupCounter = document.getElementById('backup-counter');
-  if (backupCounter) {
-    backupCounter.textContent = `${appData.autoBackup.changesCount}/${appData.autoBackup.maxChanges} changes`;
-  }
-}
-
-function triggerAutoBackup() {
-  // Create backup data
-  const backupData = {
-    timestamp: new Date().toISOString(),
-    currentDate: appData.currentDate,
-    data: JSON.parse(JSON.stringify(appData)) // Deep clone
-  };
-  
-  // Download backup file
-  const dataStr = JSON.stringify(backupData, null, 2);
-  const dataBlob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(dataBlob);
-  
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `aitashii-powerlifting-backup-${new Date().toISOString().split('T')[0]}.json`;
-  
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  
-  URL.revokeObjectURL(url);
-  
-  // Reset counter
-  appData.autoBackup.changesCount = 0;
-  updateAutoBackupDisplay();
-  
-  // Also save to cloud if signed in
-  if (isSignedIn) {
-    saveUserData();
-  }
-  
-  console.log('🌸 Auto-backup triggered and downloaded');
-}
-
-// Fixed Navigation
-function initializeNavigation() {
-  console.log('Initializing navigation...');
-  
-  const navItems = document.querySelectorAll('.nav__item');
-  const sections = document.querySelectorAll('.section');
-  
-  console.log('Found nav items:', navItems.length);
-  console.log('Found sections:', sections.length);
-
-  navItems.forEach((item, index) => {
-    console.log(`Nav item ${index}:`, item.dataset.section);
+function updateDataSummary() {
+  const dataSummary = document.getElementById('data-summary');
+  if (dataSummary) {
+    const totalWorkouts = Object.values(appData.prHistory).reduce((sum, history) => sum + history.length, 0);
+    const measurementCount = appData.measurements.length;
+    const currentPhase = getCurrentTrainingPhase();
     
-    item.addEventListener('click', (e) => {
-      e.preventDefault();
-      const targetSection = item.dataset.section;
-      console.log('Clicking nav item:', targetSection);
-      
-      // Update active nav item
-      navItems.forEach(nav => nav.classList.remove('nav__item--active'));
-      item.classList.add('nav__item--active');
-      
-      // Update active section
-      sections.forEach(section => {
-        section.classList.remove('section--active');
-        console.log('Removing active from:', section.id);
+    dataSummary.innerHTML = `
+      <div class="summary-item">
+        <div class="summary-label">Total Workouts Recorded</div>
+        <div class="summary-value">${totalWorkouts}</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Body Measurements</div>
+        <div class="summary-value">${measurementCount}</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Current Phase</div>
+        <div class="summary-value">${currentPhase ? currentPhase.name : 'None'}</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Data Quality</div>
+        <div class="summary-value">Complete</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Last Updated</div>
+        <div class="summary-value">${appData.lastUpdated ? formatDateShort(appData.lastUpdated.split('T')[0]) : 'Never'}</div>
+      </div>
+    `;
+  }
+}
+
+// ==== FORMS ====
+
+function initializeForms() {
+  console.log('📝 Initializing forms...');
+  
+  // PR Form
+  const prForm = document.getElementById('pr-form');
+  if (prForm) {
+    prForm.addEventListener('submit', handlePRSubmit);
+    
+    // Update estimated 1RM on weight/reps change
+    const weightInput = document.getElementById('pr-weight');
+    const repsInput = document.getElementById('pr-reps');
+    
+    if (weightInput && repsInput) {
+      [weightInput, repsInput].forEach(input => {
+        input.addEventListener('input', updateEstimated1RM);
       });
-      
-      const targetElement = document.getElementById(targetSection);
-      if (targetElement) {
-        targetElement.classList.add('section--active');
-        console.log('Adding active to:', targetSection);
-      } else {
-        console.error('Target section not found:', targetSection);
-      }
-    });
-  });
-}
-
-// Timer Functions
-function initializeTimer() {
-  const startButton = document.getElementById('start-timer');
-  if (!startButton) return;
-
-  startButton.addEventListener('click', () => {
-    if (!isTimerRunning) {
-      startTimer();
-      startButton.textContent = 'Stop Timer';
-      startButton.classList.remove('btn--primary');
-      startButton.classList.add('btn--secondary');
-    } else {
-      stopTimer();
-      startButton.textContent = 'Start Timer';
-      startButton.classList.remove('btn--secondary');
-      startButton.classList.add('btn--primary');
     }
-  });
-}
-
-function startTimer() {
-  isTimerRunning = true;
-  timerInterval = setInterval(() => {
-    timerSeconds++;
-    updateTimerDisplay();
-  }, 1000);
-}
-
-function stopTimer() {
-  isTimerRunning = false;
-  clearInterval(timerInterval);
-}
-
-function updateTimerDisplay() {
-  const timerDisplay = document.getElementById('timer-display');
-  if (!timerDisplay) return;
-  
-  const hours = Math.floor(timerSeconds / 3600);
-  const minutes = Math.floor((timerSeconds % 3600) / 60);
-  const seconds = timerSeconds % 60;
-  
-  const display = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  timerDisplay.textContent = display;
-}
-
-// PR Management
-function initializePRForm() {
-  const form = document.getElementById('pr-form');
-  if (!form) return;
-
-  const weightInput = document.getElementById('pr-weight');
-  const repsInput = document.getElementById('pr-reps');
-  const estimatedDisplay = document.getElementById('estimated-1rm-display');
-  const dateInput = document.getElementById('pr-date');
-
-  // Set current app date (not system date)
-  if (dateInput) {
-    dateInput.value = appData.currentDate;
   }
-
-  // Calculate estimated 1RM on input change
-  if (weightInput && repsInput && estimatedDisplay) {
-    [weightInput, repsInput].forEach(input => {
-      input.addEventListener('input', () => {
-        const weight = parseFloat(weightInput.value);
-        const reps = parseInt(repsInput.value);
-        
-        if (weight && reps) {
-          const estimated1RM = calculate1RM(weight, reps);
-          estimatedDisplay.textContent = `${estimated1RM}kg`;
-        } else {
-          estimatedDisplay.textContent = '-';
-        }
-      });
-    });
+  
+  // Measurements Form
+  const measurementsForm = document.getElementById('measurements-form');
+  if (measurementsForm) {
+    measurementsForm.addEventListener('submit', handleMeasurementSubmit);
   }
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    addNewPR();
-  });
+  
+  // Cycle Form
+  const cycleForm = document.getElementById('cycle-form');
+  if (cycleForm) {
+    cycleForm.addEventListener('submit', handleCycleSubmit);
+  }
+  
+  // Export buttons
+  const exportCompleteBtn = document.getElementById('export-complete-btn');
+  const exportCoachBtn = document.getElementById('export-coach-btn');
+  
+  if (exportCompleteBtn) {
+    exportCompleteBtn.addEventListener('click', exportCompleteData);
+  }
+  
+  if (exportCoachBtn) {
+    exportCoachBtn.addEventListener('click', exportCoachData);
+  }
+  
+  // Set default dates
+  const today = new Date().toISOString().split('T')[0];
+  const prDate = document.getElementById('pr-date');
+  const measurementDate = document.getElementById('measurement-date');
+  
+  if (prDate) prDate.value = today;
+  if (measurementDate) measurementDate.value = today;
+  
+  console.log('📝 Forms initialized');
 }
 
-function calculate1RM(weight, reps) {
-  if (reps === 1) return weight;
-  // Brzycki formula
-  return Math.round((weight * 36) / (37 - reps) * 2) / 2; // Round to nearest 0.5kg
-}
-
-function addNewPR() {
+function handlePRSubmit(e) {
+  e.preventDefault();
+  
   const exercise = document.getElementById('pr-exercise').value;
   const weight = parseFloat(document.getElementById('pr-weight').value);
   const reps = parseInt(document.getElementById('pr-reps').value);
   const date = document.getElementById('pr-date').value;
-
-  const estimated1RM = calculate1RM(weight, reps);
-
-  // Update current PRs
-  appData.currentPRs[exercise] = {
-    weight: weight,
-    reps: reps,
-    date: date,
-    estimated1RM: estimated1RM
-  };
-
-  // Add to history
-  if (!appData.prHistory[exercise]) {
-    appData.prHistory[exercise] = [];
-  }
-  appData.prHistory[exercise].push({
-    date: date,
-    weight: weight,
-    reps: reps,
-    estimated1RM: estimated1RM
-  });
-
-  // Sort history by date
-  appData.prHistory[exercise].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  // Increment backup counter
-  incrementBackupCounter();
-
-  // Update dashboard and charts
-  updateDashboard();
-  updatePRChart();
   
-  // Reset form
-  document.getElementById('pr-form').reset();
-  document.getElementById('pr-date').value = appData.currentDate;
-  document.getElementById('estimated-1rm-display').textContent = '-';
-
-  alert(`🌸 New PR added! ${exercise.toUpperCase()}: ${weight}kg x${reps} (Est. 1RM: ${estimated1RM}kg)\n\nAll training weights have been updated.`);
-  
-  // Save to cloud if signed in
-  if (isSignedIn) {
-    saveUserData();
-  }
-}
-
-// Enhanced Measurements with Fat Mass Calculation
-function setupFatMassCalculation() {
-  const weightInput = document.getElementById('measurement-weight');
-  const bodyFatInput = document.getElementById('measurement-bodyfat');
-  const fatMassInput = document.getElementById('measurement-fatmass');
-
-  if (!weightInput || !bodyFatInput || !fatMassInput) return;
-
-  function calculateFatMass() {
-    const weight = parseFloat(weightInput.value);
-    const bodyFat = parseFloat(bodyFatInput.value);
+  if (exercise && weight && reps && date) {
+    const estimated1RM = weight * (1 + reps / 30);
     
-    if (weight && bodyFat) {
-      const fatMass = Math.round((weight * bodyFat / 100) * 10) / 10;
-      fatMassInput.value = fatMass;
-    } else {
-      fatMassInput.value = '';
+    const newPR = {
+      weight: weight,
+      reps: reps,
+      date: date,
+      estimated1RM: Math.round(estimated1RM * 10) / 10
+    };
+    
+    // Update current PRs
+    appData.currentPRs[exercise] = newPR;
+    
+    // Add to history
+    if (!appData.prHistory[exercise]) {
+      appData.prHistory[exercise] = [];
+    }
+    appData.prHistory[exercise].push(newPR);
+    appData.prHistory[exercise].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    saveDataToStorage();
+    updateAllSections();
+    updateCharts();
+    
+    // Reset form
+    document.getElementById('pr-form').reset();
+    document.getElementById('pr-date').value = new Date().toISOString().split('T')[0];
+    
+    showNotification(`🏆 New ${exercise} PR added!`, 'success');
+    
+    if (navigator.vibrate) {
+      navigator.vibrate([50, 50, 50]);
     }
   }
-
-  weightInput.addEventListener('input', calculateFatMass);
-  bodyFatInput.addEventListener('input', calculateFatMass);
 }
 
-function initializeMeasurementsForm() {
-  const form = document.getElementById('measurements-form');
-  if (!form) return;
+function handleMeasurementSubmit(e) {
+  e.preventDefault();
   
-  // Set current app date
-  const dateInput = document.getElementById('measurement-date');
-  if (dateInput) {
-    dateInput.value = appData.currentDate;
-  }
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    addMeasurement();
-  });
-}
-
-function addMeasurement() {
   const date = document.getElementById('measurement-date').value;
   const weight = parseFloat(document.getElementById('measurement-weight').value);
   const bodyFat = parseFloat(document.getElementById('measurement-bodyfat').value);
   const muscle = parseFloat(document.getElementById('measurement-muscle').value);
   const fatMass = parseFloat(document.getElementById('measurement-fatmass').value);
   const bodyWater = parseFloat(document.getElementById('measurement-bodywater').value);
-
-  const measurement = { 
-    date, 
-    weight, 
-    bodyFat, 
-    muscle, 
-    fatMass: fatMass || (weight * bodyFat / 100),
-    bodyWater 
-  };
   
-  appData.measurements.push(measurement);
-  
-  // Sort by date
-  appData.measurements.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  // Update current stats in bodyGoals
-  appData.bodyGoals.current = {
+  const newMeasurement = {
+    date: date,
     weight: weight,
     bodyFat: bodyFat,
-    fatMass: fatMass || (weight * bodyFat / 100),
-    muscleMass: muscle,
+    muscle: muscle,
+    fatMass: fatMass,
     bodyWater: bodyWater
   };
-
-  // Increment backup counter
-  incrementBackupCounter();
-
-  // Update charts and dashboard
-  updateWeightChart();
-  updateBodyFatChart();
-  updateBodyCompositionDisplay();
-  updateDashboard();
-
-  // Reset form
+  
+  appData.measurements.push(newMeasurement);
+  appData.measurements.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // Update current body goals
+  const latest = appData.measurements[appData.measurements.length - 1];
+  appData.bodyGoals.current = {
+    weight: latest.weight,
+    bodyFat: latest.bodyFat,
+    fatMass: latest.fatMass,
+    muscleMass: latest.muscle,
+    bodyWater: latest.bodyWater
+  };
+  
+  saveDataToStorage();
+  updateAllSections();
+  updateCharts();
+  
   document.getElementById('measurements-form').reset();
-  document.getElementById('measurement-date').value = appData.currentDate;
-
-  alert('🌸 Measurements saved!');
+  document.getElementById('measurement-date').value = new Date().toISOString().split('T')[0];
   
-  // Save to cloud if signed in
-  if (isSignedIn) {
-    saveUserData();
+  showNotification('📊 New measurement added!', 'success');
+}
+
+function handleCycleSubmit(e) {
+  e.preventDefault();
+  
+  const periodStart = document.getElementById('period-start').value;
+  const periodEnd = document.getElementById('period-end').value;
+  const cycleLength = parseInt(document.getElementById('cycle-length').value);
+  
+  if (periodStart && periodEnd && cycleLength) {
+    appData.menstrualCycle.lastPeriodStart = periodStart;
+    appData.menstrualCycle.lastPeriodEnd = periodEnd;
+    appData.menstrualCycle.cycleLength = cycleLength;
+    
+    const start = new Date(periodStart);
+    const end = new Date(periodEnd);
+    const periodLength = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    
+    appData.menstrualCycle.periodLength = periodLength;
+    
+    saveDataToStorage();
+    updateAllSections();
+    
+    document.getElementById('cycle-form').reset();
+    
+    showNotification('🌙 Cycle updated!', 'success');
   }
 }
 
-// Menstrual Cycle Tracker
-function initializeCycleTracker() {
-  const updateButton = document.getElementById('update-cycle');
-  if (!updateButton) return;
+function updateEstimated1RM() {
+  const weight = parseFloat(document.getElementById('pr-weight').value) || 0;
+  const reps = parseInt(document.getElementById('pr-reps').value) || 1;
   
-  // Set current period date
-  const periodInput = document.getElementById('period-date');
-  if (periodInput) {
-    periodInput.value = appData.menstrualCycle.lastPeriod;
+  if (weight > 0) {
+    const estimated1RM = weight * (1 + reps / 30);
+    const display = document.getElementById('estimated-1rm');
+    
+    if (display) {
+      display.textContent = `${Math.round(estimated1RM * 10) / 10}kg`;
+    }
   }
+}
 
-  updateButton.addEventListener('click', () => {
-    const periodDate = document.getElementById('period-date').value;
-    if (periodDate) {
-      appData.menstrualCycle.lastPeriod = periodDate;
-      
-      // Increment backup counter
-      incrementBackupCounter();
-      
-      updateMenstrualCycleCalculations();
-      updateDashboard();
-      
-      // Save to cloud if signed in
-      if (isSignedIn) {
-        saveUserData();
+function exportCompleteData() {
+  const exportData = {
+    exportType: 'complete-data',
+    appName: 'Aitashii Powerlifting Tracker',
+    version: appData.version,
+    exportDate: new Date().toISOString(),
+    userData: {
+      currentPRs: appData.currentPRs,
+      measurements: appData.measurements,
+      bodyGoals: appData.bodyGoals,
+      menstrualCycle: appData.menstrualCycle,
+      prHistory: appData.prHistory,
+      trainingPhases: appData.trainingPhases,
+      weeklyProgress: appData.weeklyProgress,
+      currentDate: appData.currentDate
+    }
+  };
+  
+  const fileName = `Aitashii-complete-export-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-')}.json`;
+  downloadJsonFile(JSON.stringify(exportData, null, 2), fileName);
+  
+  showNotification('📊 Complete data exported!', 'success');
+}
+
+function exportCoachData() {
+  const currentPhase = getCurrentTrainingPhase();
+  
+  const coachData = {
+    exportType: 'coach-analysis',
+    appName: 'Aitashii Powerlifting Tracker',
+    version: appData.version,
+    exportDate: new Date().toISOString(),
+    
+    // Current status
+    currentStatus: {
+      date: appData.currentDate,
+      phase: currentPhase ? currentPhase.name : null,
+      PRs: appData.currentPRs,
+      bodyComposition: appData.bodyGoals.current,
+      menstrualCycle: {
+        lastPeriodStart: appData.menstrualCycle.lastPeriodStart,
+        cycleLength: appData.menstrualCycle.cycleLength
       }
-      
-      alert('🌸 Cycle updated!');
-    }
-  });
+    },
+    
+    // Progress data
+    progressData: {
+      prHistory: appData.prHistory,
+      measurementsHistory: appData.measurements,
+      bodyGoals: appData.bodyGoals
+    },
+    
+    // Training analysis
+    trainingAnalysis: {
+      currentPhase: currentPhase,
+      trainingPhases: appData.trainingPhases,
+      weeklyProgress: appData.weeklyProgress
+    },
+    
+    // Recommendations needed
+    coachNotes: "Analyze progress and provide recommendations for next phase"
+  };
+  
+  const fileName = `Aitashii-coach-analysis-${new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-')}.json`;
+  downloadJsonFile(JSON.stringify(coachData, null, 2), fileName);
+  
+  showNotification('👩‍💼 Coach analysis exported!', 'success');
 }
 
-function generateCycleCalendar() {
-  const calendar = document.getElementById('cycle-calendar-display');
-  if (!calendar) return;
+function downloadJsonFile(jsonString, fileName) {
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
   
-  const currentDate = new Date(appData.currentDate + 'T00:00:00');
-  const lastPeriod = new Date(appData.menstrualCycle.lastPeriod + 'T00:00:00');
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.style.display = 'none';
   
-  // Clear calendar
-  calendar.innerHTML = '';
-
-  // Generate days for current month
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
   
-  // Add day labels
-  const dayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-  dayLabels.forEach(label => {
-    const dayLabel = document.createElement('div');
-    dayLabel.className = 'calendar-day-label';
-    dayLabel.textContent = label;
-    dayLabel.style.fontWeight = 'bold';
-    dayLabel.style.textAlign = 'center';
-    dayLabel.style.padding = '8px';
-    calendar.appendChild(dayLabel);
-  });
-
-  // Add empty cells for days before month starts
-  const startDay = firstDay.getDay();
-  for (let i = 0; i < startDay; i++) {
-    const emptyDay = document.createElement('div');
-    emptyDay.className = 'calendar-day';
-    calendar.appendChild(emptyDay);
-  }
-
-  // Add days of month
-  for (let day = 1; day <= lastDay.getDate(); day++) {
-    const dayElement = document.createElement('div');
-    dayElement.className = 'calendar-day';
-    dayElement.textContent = day;
-
-    const dateToCheck = new Date(year, month, day);
-    const daysDiff = Math.floor((dateToCheck - lastPeriod) / (1000 * 60 * 60 * 24));
-    const cycleDay = (daysDiff % appData.menstrualCycle.cycleLength) + 1;
-
-    // Mark special days
-    if (dateToCheck.toDateString() === currentDate.toDateString()) {
-      dayElement.classList.add('today');
-    } else if (cycleDay <= 5) {
-      dayElement.classList.add('period');
-    } else if (cycleDay >= 12 && cycleDay <= 16) {
-      dayElement.classList.add('fertile');
-    }
-
-    calendar.appendChild(dayElement);
-  }
+  URL.revokeObjectURL(url);
 }
 
-// Charts
+// ==== CHARTS ====
+
 function initializeCharts() {
-  console.log('Initializing charts...');
-  updatePRChart();
-  updateWeightChart();
-  updateBodyFatChart();
-  updateProgressChart();
-  updateVolumeChart();
+  console.log('📊 Initializing charts...');
+  
+  try {
+    setTimeout(() => {
+      initializePRChart();
+      initializeBodyCompositionChart();
+    }, 100);
+  } catch (error) {
+    console.error('❌ Error initializing charts:', error);
+  }
 }
 
-function updatePRChart() {
-  const canvas = document.getElementById('pr-chart');
-  if (!canvas) return;
+function initializePRChart() {
+  const ctx = document.getElementById('pr-chart');
+  if (!ctx) return;
   
-  const ctx = canvas.getContext('2d');
-  
-  if (charts.prChart) {
-    charts.prChart.destroy();
-  }
-
   const datasets = [];
-  const colors = ['#1FB8CD', '#FFC185', '#B4413C'];
-  let colorIndex = 0;
-
-  ['squat', 'bench', 'deadlift'].forEach(lift => {
-    if (appData.prHistory[lift]) {
+  
+  ['squat', 'bench', 'deadlift'].forEach((exercise, index) => {
+    const history = appData.prHistory[exercise] || [];
+    if (history.length > 0) {
+      const colors = ['#4ade80', '#60a5fa', '#f472b6'];
       datasets.push({
-        label: lift.charAt(0).toUpperCase() + lift.slice(1),
-        data: appData.prHistory[lift].map(pr => ({
+        label: exercise.charAt(0).toUpperCase() + exercise.slice(1),
+        data: history.map(pr => ({
           x: pr.date,
           y: pr.estimated1RM
         })),
-        borderColor: colors[colorIndex],
-        backgroundColor: colors[colorIndex] + '20',
-        fill: false,
-        tension: 0.1
+        borderColor: colors[index],
+        backgroundColor: colors[index] + '20',
+        tension: 0.4,
+        pointRadius: 6,
+        pointHoverRadius: 8
       });
-      colorIndex++;
     }
   });
-
+  
+  if (datasets.length === 0) return;
+  
   charts.prChart = new Chart(ctx, {
     type: 'line',
     data: { datasets },
@@ -1252,7 +1409,13 @@ function updatePRChart() {
       plugins: {
         title: {
           display: true,
-          text: 'PR Progress (Estimated 1RM)'
+          text: '🏆 Strength Progress (Estimated 1RM)',
+          color: '#e5e7eb'
+        },
+        legend: {
+          labels: {
+            color: '#e5e7eb'
+          }
         }
       },
       scales: {
@@ -1260,13 +1423,21 @@ function updatePRChart() {
           type: 'time',
           time: {
             unit: 'day'
+          },
+          ticks: {
+            color: '#9ca3af'
+          },
+          grid: {
+            color: '#374151'
           }
         },
         y: {
           beginAtZero: false,
-          title: {
-            display: true,
-            text: 'Weight (kg)'
+          ticks: {
+            color: '#9ca3af'
+          },
+          grid: {
+            color: '#374151'
           }
         }
       }
@@ -1274,93 +1445,35 @@ function updatePRChart() {
   });
 }
 
-function updateWeightChart() {
-  const canvas = document.getElementById('weight-chart');
-  if (!canvas) return;
+function initializeBodyCompositionChart() {
+  const ctx = document.getElementById('body-composition-chart');
+  if (!ctx || appData.measurements.length === 0) return;
   
-  const ctx = canvas.getContext('2d');
-
-  if (charts.weightChart) {
-    charts.weightChart.destroy();
-  }
-
-  charts.weightChart = new Chart(ctx, {
+  charts.bodyChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: appData.measurements.map(m => formatDate(m.date)),
-      datasets: [{
-        label: 'Weight (kg)',
-        data: appData.measurements.map(m => m.weight),
-        borderColor: '#1FB8CD',
-        backgroundColor: '#1FB8CD20',
-        fill: true,
-        tension: 0.1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        title: {
-          display: true,
-          text: 'Weight Progress'
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: false,
-          title: {
-            display: true,
-            text: 'Weight (kg)'
-          }
-        }
-      }
-    }
-  });
-}
-
-function updateBodyFatChart() {
-  const canvas = document.getElementById('bodyfat-chart');
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext('2d');
-
-  if (charts.bodyFatChart) {
-    charts.bodyFatChart.destroy();
-  }
-
-  const muscleData = appData.measurements.map(m => m.muscle || (m.weight * (100 - m.bodyFat) / 100 * 0.7));
-  const fatData = appData.measurements.map(m => m.fatMass || (m.weight * m.bodyFat / 100));
-  const waterData = appData.measurements.map(m => m.bodyWater || 0);
-
-  charts.bodyFatChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: appData.measurements.map(m => formatDate(m.date)),
+      labels: appData.measurements.map(m => m.date),
       datasets: [
         {
+          label: 'Weight (kg)',
+          data: appData.measurements.map(m => m.weight),
+          borderColor: '#4ade80',
+          backgroundColor: '#4ade8020',
+          tension: 0.4
+        },
+        {
           label: 'Muscle Mass (kg)',
-          data: muscleData,
-          borderColor: '#B4413C',
-          backgroundColor: '#B4413C20',
-          fill: false,
-          tension: 0.1
+          data: appData.measurements.map(m => m.muscle),
+          borderColor: '#60a5fa',
+          backgroundColor: '#60a5fa20',
+          tension: 0.4
         },
         {
           label: 'Fat Mass (kg)',
-          data: fatData,
-          borderColor: '#FFC185',
-          backgroundColor: '#FFC18520',
-          fill: false,
-          tension: 0.1
-        },
-        {
-          label: 'Body Water (kg)',
-          data: waterData,
-          borderColor: '#5D878F',
-          backgroundColor: '#5D878F20',
-          fill: false,
-          tension: 0.1
+          data: appData.measurements.map(m => m.fatMass),
+          borderColor: '#f472b6',
+          backgroundColor: '#f472b620',
+          tension: 0.4
         }
       ]
     },
@@ -1370,15 +1483,31 @@ function updateBodyFatChart() {
       plugins: {
         title: {
           display: true,
-          text: 'Body Composition - Detailed'
+          text: '📊 Body Composition Progress',
+          color: '#e5e7eb'
+        },
+        legend: {
+          labels: {
+            color: '#e5e7eb'
+          }
         }
       },
       scales: {
+        x: {
+          ticks: {
+            color: '#9ca3af'
+          },
+          grid: {
+            color: '#374151'
+          }
+        },
         y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Mass (kg)'
+          beginAtZero: false,
+          ticks: {
+            color: '#9ca3af'
+          },
+          grid: {
+            color: '#374151'
           }
         }
       }
@@ -1386,327 +1515,112 @@ function updateBodyFatChart() {
   });
 }
 
-function updateProgressChart() {
-  const canvas = document.getElementById('total-progress-chart');
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext('2d');
-
-  if (charts.progressChart) {
-    charts.progressChart.destroy();
-  }
-
-  const currentTotal = appData.currentPRs.squat.estimated1RM + 
-                      appData.currentPRs.bench.estimated1RM + 
-                      appData.currentPRs.deadlift.estimated1RM;
-
-  const targetTotal = 60 + 65 + 120; // Target totals
-
-  charts.progressChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Current Total', 'To Goal'],
-      datasets: [{
-        data: [currentTotal, targetTotal - currentTotal],
-        backgroundColor: ['#1FB8CD', '#ECEBD5'],
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        title: {
-          display: true,
-          text: `Progress to Goal: ${currentTotal}kg / ${targetTotal}kg`
-        }
-      }
-    }
-  });
-}
-
-function updateVolumeChart() {
-  const canvas = document.getElementById('weekly-volume-chart');
-  if (!canvas) return;
-  
-  const ctx = canvas.getContext('2d');
-
-  if (charts.volumeChart) {
-    charts.volumeChart.destroy();
-  }
-
-  // Sample weekly volume data across all phases
-  const weeklyVolumes = [12450, 13200, 11800, 14100, 13600, 12900, 15200, 14800, 16100, 15400];
-  const weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 
-                 'Week 7', 'Week 8', 'Week 9', 'Week 10'];
-
-  charts.volumeChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: weeks,
-      datasets: [{
-        label: 'Weekly Volume (kg)',
-        data: weeklyVolumes,
-        backgroundColor: '#5D878F',
-        borderColor: '#5D878F',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        title: {
-          display: true,
-          text: 'Training Volume - 30 Week Plan'
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Volume (kg)'
-          }
-        }
-      }
-    }
-  });
-}
-
-// Enhanced Dashboard Updates
-function updateDashboard() {
-  updatePRDisplay();
-  updateBodyCompositionDisplay();
-  updateWorkoutPreview();
-}
-
-function updateBodyCompositionDisplay() {
-  const current = appData.bodyGoals.current;
-  const target = appData.bodyGoals.target;
-  const changes = appData.bodyGoals.changes;
-
-  // Update main status display
-  const statusDisplay = document.querySelector('.body-comp-card .status');
-  if (statusDisplay) {
-    statusDisplay.textContent = `${current.weight}kg → ${target.weight}kg`;
-  }
-
-  // Calculate progress percentages for each metric
-  const weightProgress = ((84.1 - current.weight) / (84.1 - target.weight)) * 100;
-  const fatProgress = ((38 - current.bodyFat) / (38 - target.bodyFat)) * 100;
-  const muscleProgress = ((current.muscleMass - 44.3) / (target.muscleMass - 44.3)) * 100;
-  const waterProgress = ((current.bodyWater - 38.1) / (target.bodyWater - 38.1)) * 100;
-
-  // Update progress bars and text
-  const progressBars = document.querySelectorAll('.body-comp-card .progress-fill');
-  const progressTexts = document.querySelectorAll('.body-comp-card .progress-text');
-  
-  if (progressBars.length >= 4 && progressTexts.length >= 4) {
-    // Weight progress
-    progressBars[0].style.width = `${Math.min(100, Math.max(0, weightProgress))}%`;
-    progressTexts[0].textContent = `-${(84.1 - current.weight).toFixed(1)}kg of -${changes.netWeightLoss}kg`;
+function updateCharts() {
+  if (charts.prChart) {
+    const datasets = [];
     
-    // Fat progress  
-    progressBars[1].style.width = `${Math.min(100, Math.max(0, fatProgress))}%`;
-    progressTexts[1].textContent = `-${(38 - current.bodyFat).toFixed(1)}% body fat`;
-    
-    // Muscle progress
-    progressBars[2].style.width = `${Math.min(100, Math.max(0, muscleProgress))}%`;
-    progressTexts[2].textContent = `+${(current.muscleMass - 44.3).toFixed(1)}kg of +${changes.muscleGain}kg`;
-    
-    // Water progress
-    progressBars[3].style.width = `${Math.min(100, Math.max(0, waterProgress))}%`;
-    progressTexts[3].textContent = `+${(current.bodyWater - 38.1).toFixed(1)}kg of +${changes.waterGain}kg`;
-  }
-}
-
-function updatePRDisplay() {
-  const prItems = document.querySelectorAll('.pr-item');
-  
-  // Update Squat
-  if (prItems[0]) {
-    const squatWeight = prItems[0].querySelector('.pr-weight');
-    const squatDate = prItems[0].querySelector('.pr-date');
-    const squat1RM = prItems[0].querySelector('.pr-1rm');
-    
-    if (squatWeight) squatWeight.textContent = `${appData.currentPRs.squat.weight}kg x${appData.currentPRs.squat.reps}`;
-    if (squatDate) squatDate.textContent = formatDate(appData.currentPRs.squat.date);
-    if (squat1RM) squat1RM.textContent = `(Est. 1RM: ${appData.currentPRs.squat.estimated1RM}kg)`;
-  }
-  
-  // Update Bench
-  if (prItems[1]) {
-    const benchWeight = prItems[1].querySelector('.pr-weight');
-    const benchDate = prItems[1].querySelector('.pr-date');
-    const bench1RM = prItems[1].querySelector('.pr-1rm');
-    
-    if (benchWeight) benchWeight.textContent = `${appData.currentPRs.bench.weight}kg x${appData.currentPRs.bench.reps}`;
-    if (benchDate) benchDate.textContent = formatDate(appData.currentPRs.bench.date);
-    if (bench1RM) bench1RM.textContent = `(1RM: ${appData.currentPRs.bench.estimated1RM}kg)`;
-  }
-  
-  // Update Deadlift
-  if (prItems[2]) {
-    const deadliftWeight = prItems[2].querySelector('.pr-weight');
-    const deadliftDate = prItems[2].querySelector('.pr-date');
-    const deadlift1RM = prItems[2].querySelector('.pr-1rm');
-    
-    if (deadliftWeight) deadliftWeight.textContent = `${appData.currentPRs.deadlift.weight}kg x${appData.currentPRs.deadlift.reps}`;
-    if (deadliftDate) deadliftDate.textContent = formatDate(appData.currentPRs.deadlift.date);
-    if (deadlift1RM) deadlift1RM.textContent = `(1RM: ${appData.currentPRs.deadlift.estimated1RM}kg)`;
-  }
-}
-
-function updateWorkoutPreview() {
-  const currentPhase = calculateCurrentPhase();
-  
-  // Calculate training weights based on current PRs and phase
-  let intensity = 0.67; // Default for hypertrophy phase
-  
-  if (currentPhase.key === 'phase1') intensity = 0.67;
-  else if (currentPhase.key === 'phase2') intensity = 0.8;
-  else if (currentPhase.key === 'phase3') intensity = 0.9;
-  else if (currentPhase.key === 'phase4') intensity = 0.85;
-  
-  const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * intensity / 2.5) * 2.5;
-  const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * intensity / 2.5) * 2.5;
-  const deadliftWeight = Math.round(appData.currentPRs.deadlift.estimated1RM * intensity / 2.5) * 2.5;
-  
-  const liftPreviews = document.querySelectorAll('.lift-preview');
-  if (liftPreviews.length >= 3) {
-    liftPreviews[0].innerHTML = `<strong>Squat:</strong> 5x5 @ ${squatWeight}kg (${Math.round(intensity * 100)}%)`;
-    liftPreviews[1].innerHTML = `<strong>Bench:</strong> 4x6 @ ${benchWeight}kg (${Math.round(intensity * 100)}%)`;
-    liftPreviews[2].innerHTML = `<strong>Deadlift:</strong> 4x5 @ ${deadliftWeight}kg (${Math.round(intensity * 100)}%)`;
-  }
-  
-  // Update actual workout weights in workout section
-  updateWorkoutWeights();
-}
-
-function updateWorkoutWeights() {
-  const currentPhase = calculateCurrentPhase();
-  
-  let intensity = 0.67; // Default for hypertrophy phase
-  
-  if (currentPhase.key === 'phase1') intensity = 0.67;
-  else if (currentPhase.key === 'phase2') intensity = 0.8;
-  else if (currentPhase.key === 'phase3') intensity = 0.9;
-  else if (currentPhase.key === 'phase4') intensity = 0.85;
-  
-  const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * intensity / 2.5) * 2.5;
-  const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * intensity / 2.5) * 2.5;
-  const deadliftWeight = Math.round(appData.currentPRs.deadlift.estimated1RM * intensity / 2.5) * 2.5;
-  
-  // Update exercise intensities
-  const intensityDisplays = document.querySelectorAll('.exercise-intensity');
-  if (intensityDisplays.length >= 3) {
-    intensityDisplays[0].textContent = `${Math.round(intensity * 100)}% (${squatWeight}kg)`;
-    intensityDisplays[1].textContent = `${Math.round(intensity * 100)}% (${benchWeight}kg)`;
-    intensityDisplays[2].textContent = `${Math.round(intensity * 100)}% (${deadliftWeight}kg)`;
-  }
-  
-  // Update set rows
-  const exerciseCards = document.querySelectorAll('.exercise-card');
-  
-  // Squat
-  if (exerciseCards[0]) {
-    const setRows = exerciseCards[0].querySelectorAll('.set-row span');
-    if (setRows.length >= 6) {
-      setRows[0].textContent = `Warm-up: ${Math.round((squatWeight * 0.7) / 2.5) * 2.5}kg x 8`;
-      for (let i = 1; i <= 5; i++) {
-        setRows[i].textContent = `Set ${i}: ${squatWeight}kg x 5`;
-      }
-    }
-  }
-  
-  // Bench
-  if (exerciseCards[1]) {
-    const setRows = exerciseCards[1].querySelectorAll('.set-row span');
-    if (setRows.length >= 5) {
-      setRows[0].textContent = `Warm-up: ${Math.round((benchWeight * 0.7) / 2.5) * 2.5}kg x 8`;
-      for (let i = 1; i <= 4; i++) {
-        setRows[i].textContent = `Set ${i}: ${benchWeight}kg x 6`;
-      }
-    }
-  }
-  
-  // Deadlift
-  if (exerciseCards[2]) {
-    const setRows = exerciseCards[2].querySelectorAll('.set-row span');
-    if (setRows.length >= 5) {
-      setRows[0].textContent = `Warm-up: ${Math.round((deadliftWeight * 0.7) / 2.5) * 2.5}kg x 5`;
-      for (let i = 1; i <= 4; i++) {
-        setRows[i].textContent = `Set ${i}: ${deadliftWeight}kg x 5`;
-      }
-    }
-  }
-}
-
-// Utility Functions
-function formatDate(dateString) {
-  const date = new Date(dateString + 'T00:00:00');
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  });
-}
-
-function formatDateFull(date) {
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                     'July', 'August', 'September', 'October', 'November', 'December'];
-  
-  const dayName = dayNames[date.getDay()];
-  const day = date.getDate();
-  const month = monthNames[date.getMonth()];
-  const year = date.getFullYear();
-  
-  return `${dayName}, ${day} ${month} ${year}`;
-}
-
-// Additional Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-  // Shake calculator
-  const shakeButton = document.querySelector('.shake-calculator .btn--secondary');
-  if (shakeButton) {
-    shakeButton.addEventListener('click', function() {
-      incrementBackupCounter();
-      alert('🌸 Shake added to log!\n\n278 kcal, 53.5g protein has been counted towards today\'s macros.');
-    });
-  }
-
-  // Set completion tracking with enhanced feedback
-  const checkboxes = document.querySelectorAll('.set-checkbox');
-  checkboxes.forEach(checkbox => {
-    checkbox.addEventListener('change', function() {
-      if (this.checked) {
-        incrementBackupCounter();
-      }
-      
-      const setRow = this.closest('.set-row');
-      if (this.checked) {
-        setRow.style.backgroundColor = 'var(--color-success)';
-        setRow.style.color = 'var(--color-white)';
-        setRow.style.borderRadius = 'var(--radius-sm)';
-        
-        // Add completion animation
-        setRow.style.transform = 'scale(1.02)';
-        setTimeout(() => {
-          setRow.style.transform = 'scale(1)';
-        }, 200);
-        
-        // Save to cloud if signed in
-        if (isSignedIn) {
-          saveUserData();
-        }
-      } else {
-        setRow.style.backgroundColor = '';
-        setRow.style.color = '';
+    ['squat', 'bench', 'deadlift'].forEach((exercise, index) => {
+      const history = appData.prHistory[exercise] || [];
+      if (history.length > 0) {
+        const colors = ['#4ade80', '#60a5fa', '#f472b6'];
+        datasets.push({
+          label: exercise.charAt(0).toUpperCase() + exercise.slice(1),
+          data: history.map(pr => ({
+            x: pr.date,
+            y: pr.estimated1RM
+          })),
+          borderColor: colors[index],
+          backgroundColor: colors[index] + '20',
+          tension: 0.4,
+          pointRadius: 6,
+          pointHoverRadius: 8
+        });
       }
     });
-  });
+    
+    charts.prChart.data.datasets = datasets;
+    charts.prChart.update();
+  }
+  
+  if (charts.bodyChart && appData.measurements.length > 0) {
+    charts.bodyChart.data.labels = appData.measurements.map(m => m.date);
+    charts.bodyChart.data.datasets[0].data = appData.measurements.map(m => m.weight);
+    charts.bodyChart.data.datasets[1].data = appData.measurements.map(m => m.muscle);
+    charts.bodyChart.data.datasets[2].data = appData.measurements.map(m => m.fatMass);
+    charts.bodyChart.update();
+  }
+}
+
+// ==== UTILITY FUNCTIONS ====
+
+function getCurrentTrainingPhase() {
+  const currentDate = new Date(appData.currentDate);
+  
+  for (const phase of Object.values(appData.trainingPhases)) {
+    const startDate = new Date(phase.startDate);
+    const endDate = new Date(phase.endDate);
+    
+    if (currentDate >= startDate && currentDate <= endDate) {
+      return phase;
+    }
+  }
+  
+  return appData.trainingPhases.phase1; // Default to phase 1
+}
+
+function getPhaseNumber(phase) {
+  const phaseNames = Object.keys(appData.trainingPhases);
+  for (let i = 0; i < phaseNames.length; i++) {
+    if (appData.trainingPhases[phaseNames[i]] === phase) {
+      return i + 1;
+    }
+  }
+  return 1;
+}
+
+function formatDateShort(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+}
+
+// ==== NOTIFICATIONS ====
+
+function showNotification(message, type = 'info') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `notification notification--${type}`;
+  notification.textContent = message;
+  
+  // Add to page
+  document.body.appendChild(notification);
+  
+  // Show with animation
+  setTimeout(() => notification.classList.add('show'), 100);
+  
+  // Remove after delay
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => document.body.removeChild(notification), 300);
+  }, 3000);
+}
+
+// ==== GLOBAL FUNCTIONS ====
+
+// Calendar navigation (global)
+window.changeCalendarMonth = function(direction) {
+  // This would update the calendar view
+  console.log('📅 Calendar navigation:', direction > 0 ? 'next' : 'previous');
+  showNotification('📅 Calendar navigation - feature coming soon!', 'info');
+}
+
+// Initialize on window load
+window.addEventListener('load', function() {
+  console.log('🌸 Window loaded, finalizing setup...');
+  
+  setTimeout(() => {
+    updateAllSections();
+    updateCharts();
+  }, 500);
+  
+  console.log('🎉 Aitashii Powerlifting Tracker - COMPLETE VERSION ready!');
 });
-
-console.log('🌸🐱 Aitashii Powerlifting Tracker loaded successfully!');
