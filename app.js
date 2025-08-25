@@ -1,5 +1,5 @@
-// 🌸🐱 6xSBD PWA Training Tracker - FIXED HAMBURGER MENU
-// Fixed menu + all functionality working
+// 🌸🐱 6xSBD PWA Training Tracker - COMPLETE FIXED VERSION
+// Fixed: Chrome Windows, Treningi tab, Live saving, Notifications
 // Edge Mobile Compatibility Fix - Add to top of app.js
 
 // Detect Edge Mobile and apply fixes
@@ -105,19 +105,17 @@ if (isMobile) {
   });
 }
 
+// the end of Edge fix
 let appData = {
-  // PWA version tracking
   version: '1.0.0',
   lastUpdated: null,
-  
-  // Current Date System - controls all date-dependent functionality
   currentDate: "2025-08-25",
   
-  // Auto-backup settings (3 changes)
+  // Simplified backup (no notifications)
   autoBackup: {
     changesCount: 0,
     maxChanges: 3,
-    autoDownload: true,
+    autoDownload: false, // DISABLED auto-download
     lastBackup: null
   },
   
@@ -133,33 +131,32 @@ let appData = {
       date: "2025-08-19", 
       weight: 84.1, 
       bodyFat: 38, 
-      muscle: 27.1,        // FIXED: was 44.3, now correct 27.1
-      fatMass: 32.7,       // FIXED: was 32.0, now correct 32.7
-      bodyWater: 37.7      // FIXED: was 38.1, now correct 37.7
+      muscle: 27.1,
+      fatMass: 32.7,
+      bodyWater: 37.7
     }
   ],
   
-  // FIXED: Body composition goals with correct data
   bodyGoals: {
     current: {
       weight: 84.1,
       bodyFat: 38,
-      fatMass: 32.7,      // FIXED
-      muscleMass: 27.1,   // FIXED
-      bodyWater: 37.7     // FIXED
+      fatMass: 32.7,
+      muscleMass: 27.1,
+      bodyWater: 37.7
     },
     target: {
       weight: 72,
-      bodyFat: 20,        // FIXED: was 18, you said 20%
+      bodyFat: 20,
       fatMass: 13.0,
-      muscleMass: 32.7,   // FIXED: +5.6kg from current
-      bodyWater: 43.1     // FIXED: +5.4kg from current
+      muscleMass: 32.7,
+      bodyWater: 43.1
     },
     changes: {
-      fatLoss: 19.7,      // FIXED: 32.7 - 13.0
-      muscleGain: 5.6,    // FIXED: 32.7 - 27.1
-      waterGain: 5.4,     // FIXED: 43.1 - 37.7
-      netWeightLoss: 12.1 // 84.1 - 72
+      fatLoss: 19.7,
+      muscleGain: 5.6,
+      waterGain: 5.4,
+      netWeightLoss: 12.1
     }
   },
   
@@ -183,7 +180,6 @@ let appData = {
     ]
   },
   
-  // Complete 4-phase training plan with exact dates
   trainingPhases: {
     phase1: {
       name: "HYPERTROPHY + REHAB",
@@ -244,36 +240,31 @@ let appData = {
   }
 };
 
-// Chart instances
 let charts = {};
 
-// Initialize Application
+// Initialize Application - FIXED for all browsers
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🌸 6xSBD PWA initializing...');
   
   try {
-    // Load data from localStorage - LIVE SAVING!
     loadDataFromStorage();
-    
-    // Initialize all components step by step
-    initializeHamburgerMenu();
+    initializeHamburgerMenuFixed();
     initializeDateSystem();
     initializeAutoBackup();
     initializeForms();
     initializeCharts();
+    initializeTrainingCalendar(); // FIXED: Added this
     
     updateDashboard();
     updateAllDateDependencies();
     
-    console.log('✅ 6xSBD PWA ready with LIVE SAVING!');
+    console.log('✅ 6xSBD PWA ready!');
   } catch (error) {
     console.error('❌ Error initializing app:', error);
-    // Show basic interface even if there's an error
-    document.body.innerHTML += '<div style="position:fixed;top:10px;right:10px;background:red;color:white;padding:10px;border-radius:5px;">⚠️ JavaScript Error - Check Console</div>';
   }
 });
 
-// ==== LIVE SAVING PWA FUNCTIONALITY ====
+// ==== SILENT LIVE SAVING (No notifications) ====
 
 function loadDataFromStorage() {
   try {
@@ -281,10 +272,11 @@ function loadDataFromStorage() {
     if (savedData) {
       const parsed = JSON.parse(savedData);
       appData = { ...appData, ...parsed };
-      console.log('📱 Data loaded from localStorage - LIVE!');
+      console.log('📱 Data loaded from localStorage');
+      showSaveIndicator('📱 Dane załadowane', '#22c55e');
     }
   } catch (error) {
-    console.error('❌ Error loading data from localStorage:', error);
+    console.error('❌ Error loading data:', error);
   }
 }
 
@@ -292,26 +284,24 @@ function saveDataToStorage() {
   try {
     appData.lastUpdated = new Date().toISOString();
     localStorage.setItem('6xsbd-data', JSON.stringify(appData));
-    console.log('💾 Data saved LIVE to localStorage');
-    
-    // Show subtle save indicator
-    showSaveIndicator();
+    console.log('💾 Data saved to localStorage');
+    showSaveIndicator('💾 Zapisano', '#22c55e');
   } catch (error) {
-    console.error('❌ Error saving data to localStorage:', error);
+    console.error('❌ Error saving data:', error);
+    showSaveIndicator('❌ Błąd zapisu', '#ef4444');
   }
 }
 
-function showSaveIndicator() {
-  // Create or update save indicator
+function showSaveIndicator(text, color) {
   let indicator = document.getElementById('save-indicator');
   if (!indicator) {
     indicator = document.createElement('div');
     indicator.id = 'save-indicator';
     indicator.style.cssText = `
       position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #22c55e;
+      top: 20px;
+      right: 20px;
+      background: ${color};
       color: white;
       padding: 8px 12px;
       border-radius: 20px;
@@ -319,11 +309,13 @@ function showSaveIndicator() {
       z-index: 9999;
       opacity: 0;
       transition: opacity 0.3s;
+      pointer-events: none;
     `;
     document.body.appendChild(indicator);
   }
   
-  indicator.textContent = '💾 Zapisano';
+  indicator.textContent = text;
+  indicator.style.backgroundColor = color;
   indicator.style.opacity = '1';
   
   setTimeout(() => {
@@ -331,121 +323,260 @@ function showSaveIndicator() {
   }, 1500);
 }
 
-// ==== FIXED HAMBURGER MENU FUNCTIONALITY ====
+// ==== FIXED HAMBURGER MENU - Works on ALL browsers ====
 
-function initializeHamburgerMenu() {
-  console.log('🍔 Initializing hamburger menu...');
+function initializeHamburgerMenuFixed() {
+  console.log('🍔 Initializing FIXED hamburger menu...');
   
-  // Wait a bit for DOM to be fully ready
-  setTimeout(() => {
-    const hamburgerBtn = document.getElementById('hamburger-btn');
-    const closeMenuBtn = document.getElementById('close-menu-btn');
-    const menuOverlay = document.getElementById('menu-overlay');
-    const slidingMenu = document.getElementById('sliding-menu');
-    const menuItems = document.querySelectorAll('.menu-item');
-
-    if (!hamburgerBtn) {
-      console.error('❌ Hamburger button not found!');
-      return;
-    }
-
-    console.log('✅ Found hamburger button, setting up events...');
-
-    // Clear any existing event listeners
-    hamburgerBtn.replaceWith(hamburgerBtn.cloneNode(true));
-    const newHamburgerBtn = document.getElementById('hamburger-btn');
-
-    // Open menu
-    newHamburgerBtn.addEventListener('click', function(e) {
-      console.log('🍔 Hamburger clicked!');
-      e.preventDefault();
-      e.stopPropagation();
-      openMenu();
-    });
-
-    // Close menu
-    if (closeMenuBtn) {
-      closeMenuBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        closeMenu();
-      });
-    }
-
-    // Close menu when clicking overlay
-    if (menuOverlay) {
-      menuOverlay.addEventListener('click', function(e) {
-        e.preventDefault();
-        closeMenu();
-      });
-    }
-
-    // Menu item navigation
-    menuItems.forEach(item => {
-      item.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const section = this.getAttribute('data-section');
-        console.log('📱 Menu item clicked:', section);
-        
-        if (section) {
-          showSection(section);
-          closeMenu();
-          
-          // Update active menu item
-          menuItems.forEach(mi => mi.classList.remove('active'));
-          this.classList.add('active');
-        }
-      });
-    });
-
-    // Swipe to open menu
-    let startX = 0;
-    let currentX = 0;
-    let isSwipingFromEdge = false;
-
-    document.addEventListener('touchstart', function(e) {
-      startX = e.touches[0].clientX;
-      isSwipingFromEdge = startX < 30; // Edge swipe detection
-    });
-
-    document.addEventListener('touchmove', function(e) {
-      if (!isSwipingFromEdge) return;
-      currentX = e.touches[0].clientX;
-      const deltaX = currentX - startX;
-      
-      if (deltaX > 50 && slidingMenu && !slidingMenu.classList.contains('active')) {
-        openMenu();
-      }
-    });
-
-    function openMenu() {
-      console.log('📂 Opening menu...');
-      if (newHamburgerBtn) newHamburgerBtn.classList.add('active');
-      if (menuOverlay) menuOverlay.classList.add('active');
-      if (slidingMenu) slidingMenu.classList.add('active');
-      document.body.style.overflow = 'hidden';
-      
-      // Add haptic feedback if supported
-      if (navigator.vibrate) {
-        navigator.vibrate(10);
-      }
-    }
-
-    function closeMenu() {
-      console.log('📁 Closing menu...');
-      if (newHamburgerBtn) newHamburgerBtn.classList.remove('active');
-      if (menuOverlay) menuOverlay.classList.remove('active');
-      if (slidingMenu) slidingMenu.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-
-    console.log('🍔 Hamburger menu initialized successfully!');
-  }, 100);
+  // Multiple initialization attempts for compatibility
+  setTimeout(() => setupHamburgerMenu(), 100);
+  setTimeout(() => setupHamburgerMenu(), 500);
+  
+  // Also setup on window load as fallback
+  window.addEventListener('load', () => {
+    setTimeout(() => setupHamburgerMenu(), 100);
+  });
 }
 
-// ==== DYNAMIC DATE SYSTEM ====
+function setupHamburgerMenu() {
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const closeMenuBtn = document.getElementById('close-menu-btn');
+  const menuOverlay = document.getElementById('menu-overlay');
+  const slidingMenu = document.getElementById('sliding-menu');
+  const menuItems = document.querySelectorAll('.menu-item');
+
+  if (!hamburgerBtn) {
+    console.warn('⚠️ Hamburger button not found');
+    return;
+  }
+
+  console.log('✅ Setting up hamburger menu events...');
+
+  // Clear any existing event listeners - CHROME FIX
+  const newHamburgerBtn = hamburgerBtn.cloneNode(true);
+  hamburgerBtn.parentNode.replaceChild(newHamburgerBtn, hamburgerBtn);
+  
+  // UNIVERSAL event handler for ALL browsers
+  newHamburgerBtn.addEventListener('click', handleMenuToggle, false);
+  newHamburgerBtn.addEventListener('touchend', handleMenuToggle, false);
+  
+  // Close menu events
+  if (closeMenuBtn) {
+    closeMenuBtn.addEventListener('click', closeMenu, false);
+    closeMenuBtn.addEventListener('touchend', closeMenu, false);
+  }
+
+  if (menuOverlay) {
+    menuOverlay.addEventListener('click', closeMenu, false);
+  }
+
+  // Menu item navigation
+  menuItems.forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const section = this.getAttribute('data-section');
+      console.log('📱 Menu item clicked:', section);
+      
+      if (section) {
+        showSection(section);
+        closeMenu();
+        
+        // Update active menu item
+        menuItems.forEach(mi => mi.classList.remove('active'));
+        this.classList.add('active');
+      }
+    }, false);
+  });
+
+  function handleMenuToggle(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🍔 Hamburger clicked!');
+    
+    if (slidingMenu && slidingMenu.classList.contains('active')) {
+      closeMenu();
+    } else {
+      openMenu();
+    }
+  }
+
+  function openMenu() {
+    console.log('📂 Opening menu...');
+    if (newHamburgerBtn) newHamburgerBtn.classList.add('active');
+    if (menuOverlay) menuOverlay.classList.add('active');
+    if (slidingMenu) slidingMenu.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    if (navigator.vibrate) navigator.vibrate(10);
+  }
+
+  function closeMenu() {
+    console.log('📁 Closing menu...');
+    if (newHamburgerBtn) newHamburgerBtn.classList.remove('active');
+    if (menuOverlay) menuOverlay.classList.remove('active');
+    if (slidingMenu) slidingMenu.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  console.log('🍔 Hamburger menu setup complete!');
+}
+
+// ==== FIXED TRAINING CALENDAR SECTION ====
+
+function initializeTrainingCalendar() {
+  console.log('📅 Initializing training calendar...');
+}
+
+function updateTrainingScheduleView() {
+  const trainingCalendar = document.getElementById('training-calendar');
+  if (!trainingCalendar) {
+    console.warn('⚠️ Training calendar element not found');
+    return;
+  }
+  
+  const currentDate = new Date(appData.currentDate);
+  const currentMonth = currentDate.getMonth();
+  const currentYear = currentDate.getFullYear();
+  
+  let calendarHTML = `
+    <div class="calendar-header">
+      <h3>📅 ${getMonthNamePolish(currentMonth)} ${currentYear}</h3>
+      <div class="calendar-controls">
+        <button class="btn btn--small" onclick="changeCalendarMonth(-1)">← Poprzedni</button>
+        <button class="btn btn--small" onclick="changeCalendarMonth(1)">Następny →</button>
+      </div>
+    </div>
+    <div class="calendar-legend">
+      <span class="legend-item training">💪 Trening</span>
+      <span class="legend-item rest">💤 Odpoczynek</span>
+      <span class="legend-item today">⭐ Dziś</span>
+    </div>
+    <div class="calendar-grid">
+      <div class="calendar-weekdays">
+        <div class="weekday">Pon</div>
+        <div class="weekday">Wto</div>
+        <div class="weekday">Śro</div>
+        <div class="weekday">Czw</div>
+        <div class="weekday">Pią</div>
+        <div class="weekday">Sob</div>
+        <div class="weekday">Nie</div>
+      </div>
+      <div class="calendar-days">
+  `;
+  
+  // Generate calendar days
+  const firstDay = new Date(currentYear, currentMonth, 1);
+  const lastDay = new Date(currentYear, currentMonth + 1, 0);
+  const startingDayOfWeek = (firstDay.getDay() + 6) % 7; // Convert to Monday = 0
+  
+  // Add empty cells for days before month starts
+  for (let i = 0; i < startingDayOfWeek; i++) {
+    calendarHTML += '<div class="calendar-day empty"></div>';
+  }
+  
+  // Add days of the month
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    const date = new Date(currentYear, currentMonth, day);
+    const dateStr = date.toISOString().split('T')[0];
+    const dayOfWeek = date.getDay();
+    const isToday = dateStr === appData.currentDate;
+    const isRestDay = dayOfWeek === 5; // Friday
+    
+    const dayClass = isToday ? 'today' : (isRestDay ? 'rest-day' : 'training-day');
+    const dayIcon = isRestDay ? '💤' : '💪';
+    
+    calendarHTML += `
+      <div class="calendar-day ${dayClass}" onclick="selectTrainingDay('${dateStr}')">
+        <div class="day-number">${day}</div>
+        <div class="day-type">${dayIcon}</div>
+        ${isToday ? '<div class="today-indicator">DZIŚ</div>' : ''}
+      </div>
+    `;
+  }
+  
+  calendarHTML += `
+      </div>
+    </div>
+    <div class="selected-day-workout" id="selected-day-workout">
+      <p>👆 Kliknij dzień aby zobaczyć trening</p>
+    </div>
+  `;
+  
+  trainingCalendar.innerHTML = calendarHTML;
+  console.log('✅ Training calendar rendered');
+}
+
+function selectTrainingDay(dateStr) {
+  console.log('📅 Selected training day:', dateStr);
+  
+  // Update current date
+  document.getElementById('current-date-picker').value = dateStr;
+  updateCurrentDate(dateStr);
+  
+  const selectedWorkout = document.getElementById('selected-day-workout');
+  if (selectedWorkout) {
+    const date = new Date(dateStr);
+    const dayName = getDayOfWeekPolish(date);
+    const dayOfWeek = date.getDay();
+    
+    if (dayOfWeek === 5) { // Rest day
+      selectedWorkout.innerHTML = `
+        <h4>💤 ${dayName} - Dzień odpoczynku</h4>
+        <div class="rest-day-activities">
+          <div class="activity-item">🧘‍♀️ Mobilność i stretching</div>
+          <div class="activity-item">🎯 Praca nad przywodzicielami</div>
+          <div class="activity-item">💆‍♀️ Regeneracja</div>
+        </div>
+      `;
+    } else { // Training day
+      const currentPhase = getCurrentTrainingPhase();
+      if (currentPhase) {
+        const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * currentPhase.exercises.squat.intensity);
+        const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * currentPhase.exercises.bench.intensity);
+        const deadliftWeight = Math.round(appData.currentPRs.deadlift.estimated1RM * currentPhase.exercises.deadlift.intensity);
+        
+        selectedWorkout.innerHTML = `
+          <h4>💪 ${dayName} - ${currentPhase.name}</h4>
+          <div class="workout-preview">
+            <div class="exercise-preview">
+              <span class="exercise-name">Squat:</span>
+              <span class="exercise-details">${currentPhase.exercises.squat.sets}x${currentPhase.exercises.squat.reps} @ ${squatWeight}kg</span>
+            </div>
+            <div class="exercise-preview">
+              <span class="exercise-name">Bench:</span>
+              <span class="exercise-details">${currentPhase.exercises.bench.sets}x${currentPhase.exercises.bench.reps} @ ${benchWeight}kg</span>
+            </div>
+            <div class="exercise-preview">
+              <span class="exercise-name">Deadlift:</span>
+              <span class="exercise-details">${currentPhase.exercises.deadlift.sets}x${currentPhase.exercises.deadlift.reps} @ ${deadliftWeight}kg</span>
+            </div>
+            <div class="exercise-preview highlight">
+              <span class="exercise-name">🎯 ${currentPhase.accessories[0]}</span>
+            </div>
+            <button class="btn btn--primary" onclick="showSection('workout')">Pełny Trening</button>
+          </div>
+        `;
+      }
+    }
+  }
+}
+
+// Global function for calendar navigation
+window.changeCalendarMonth = function(direction) {
+  const currentDate = new Date(appData.currentDate);
+  currentDate.setMonth(currentDate.getMonth() + direction);
+  
+  const newDateStr = currentDate.toISOString().split('T')[0];
+  document.getElementById('current-date-picker').value = newDateStr;
+  updateCurrentDate(newDateStr);
+}
+
+// Global function for day selection
+window.selectTrainingDay = selectTrainingDay;
+
+// ==== DATE SYSTEM ====
 
 function initializeDateSystem() {
   console.log('📅 Initializing date system...');
@@ -456,10 +587,8 @@ function initializeDateSystem() {
     return;
   }
   
-  // Set initial date
   datePicker.value = appData.currentDate;
   
-  // Listen for date changes
   datePicker.addEventListener('change', function(e) {
     const newDate = e.target.value;
     if (newDate) {
@@ -467,7 +596,7 @@ function initializeDateSystem() {
     }
   });
   
-  console.log('📅 Dynamic Date System initialized');
+  console.log('📅 Date system initialized');
 }
 
 function updateCurrentDate(newDate) {
@@ -476,17 +605,9 @@ function updateCurrentDate(newDate) {
   
   console.log(`📅 Date changed: ${oldDate} → ${newDate}`);
   
-  // LIVE SAVE the change
-  saveDataToStorage();
-  
-  // Track change for auto-backup
+  saveDataToStorage(); // Silent save
   trackChange(`Zmieniono datę na ${formatDatePolish(newDate)}`);
-  
-  // Update all date-dependent systems
   updateAllDateDependencies();
-  
-  // Show notification
-  showNotification('success', 'Data ustawiona!', `Ustawiono na ${formatDatePolish(newDate)}`);
 }
 
 function updateAllDateDependencies() {
@@ -498,6 +619,7 @@ function updateAllDateDependencies() {
     updateNutritionTargets();
     updateCompetitionCountdown();
     updateProgressTimelines();
+    updateTrainingScheduleView(); // Update calendar when date changes
     
     console.log('🔄 All date dependencies updated');
   } catch (error) {
@@ -510,13 +632,11 @@ function updateDateDisplay() {
   const formattedDate = formatDatePolish(appData.currentDate);
   const dayOfWeek = getDayOfWeekPolish(currentDate);
   
-  // Update header date info
   const dateInfo = document.getElementById('date-info');
   if (dateInfo) {
     dateInfo.textContent = `${dayOfWeek}, ${formattedDate}`;
   }
   
-  // Update main dashboard date display
   const currentDateDisplay = document.getElementById('current-date-display');
   if (currentDateDisplay) {
     currentDateDisplay.textContent = `${dayOfWeek}, ${formattedDate}`;
@@ -528,7 +648,6 @@ function updateTrainingPhaseStatus() {
   let currentPhase = null;
   let phaseStatus = "";
   
-  // Check which phase we're in
   for (const [phaseKey, phase] of Object.entries(appData.trainingPhases)) {
     const startDate = new Date(phase.startDate);
     const endDate = new Date(phase.endDate);
@@ -540,7 +659,6 @@ function updateTrainingPhaseStatus() {
     }
   }
   
-  // Update phase indicators
   const phaseIndicator = document.getElementById('phase-indicator');
   const currentPhaseStatus = document.getElementById('current-phase-status');
   
@@ -555,7 +673,7 @@ function updateTrainingPhaseStatus() {
 
 function updateDailyWorkout() {
   const currentDate = new Date(appData.currentDate);
-  const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  const dayOfWeek = currentDate.getDay();
   const dayName = getDayOfWeekPolish(currentDate);
   
   const workoutTitle = document.getElementById('workout-title');
@@ -566,8 +684,7 @@ function updateDailyWorkout() {
   let isTrainingDay = true;
   let workoutContent = '';
   
-  // Friday (5) is rest day, all other days are training days
-  if (dayOfWeek === 5) { // Friday
+  if (dayOfWeek === 5) { // Friday - Rest day
     isTrainingDay = false;
     if (workoutTitle) workoutTitle.textContent = `💤 Odpoczynek - ${dayName}`;
     if (workoutStatus) {
@@ -581,14 +698,13 @@ function updateDailyWorkout() {
         <span class="exercise-name">🧘‍♀️ Mobilność & Stretching</span>
       </div>
       <div class="exercise-item rest-day">
-        <span class="exercise-name">🔧 Dynamic stretching w rozgrzewce</span>
+        <span class="exercise-name">🔧 Dynamic stretching</span>
       </div>
       <div class="exercise-item rest-day">
         <span class="exercise-name">🦵 Joint mobility</span>
       </div>
     `;
   } else {
-    // Training day - calculate workout based on current phase
     const currentPhase = getCurrentTrainingPhase();
     
     if (workoutTitle) workoutTitle.textContent = `💪 Trening na ${dayName}`;
@@ -599,7 +715,6 @@ function updateDailyWorkout() {
     if (dayType) dayType.textContent = 'Dzień treningowy (6xSBD)';
     
     if (currentPhase) {
-      // Calculate weights based on CURRENT PRs and phase intensity
       const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * currentPhase.exercises.squat.intensity);
       const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * currentPhase.exercises.bench.intensity);
       const deadliftWeight = Math.round(appData.currentPRs.deadlift.estimated1RM * currentPhase.exercises.deadlift.intensity);
@@ -629,7 +744,6 @@ function updateDailyWorkout() {
     workoutSummary.innerHTML = workoutContent;
   }
   
-  // Update detailed workout view
   updateDetailedWorkout(getCurrentTrainingPhase(), isTrainingDay, dayName);
 }
 
@@ -651,35 +765,18 @@ function updateDetailedWorkout(currentPhase, isTrainingDay, dayName) {
           <div class="exercise-details">
             <h5>Dynamic Stretching</h5>
             <p>15-20 minut rozciągania dynamicznego</p>
-            <ul>
-              <li>Leg swings - 2x10 każda noga</li>
-              <li>Hip circles - 2x10 każdy kierunek</li>
-              <li>Arm circles - 2x10 każdy kierunek</li>
-            </ul>
           </div>
         </div>
-        
         <div class="exercise-item rest-day">
           <div class="exercise-details">
             <h5>🎯 Praca nad przywodzicielami</h5>
             <p>Specjalnie dla Ciebie - wzmacnianie</p>
-            <ul>
-              <li>Adductor squeezes - 3x15</li>
-              <li>Side lunges - 2x12 każda strona</li>
-              <li>Cossack squats - 2x8 każda strona</li>
-            </ul>
           </div>
         </div>
-        
         <div class="exercise-item rest-day">
           <div class="exercise-details">
             <h5>Mobility Work</h5>
             <p>Joint mobility i deep stretching</p>
-            <ul>
-              <li>Cat-cow stretches - 2x10</li>
-              <li>Hip flexor stretches - 2x30s każda strona</li>
-              <li>Thoracic spine rotation - 2x10 każda strona</li>
-            </ul>
           </div>
         </div>
       </div>
@@ -689,7 +786,6 @@ function updateDetailedWorkout(currentPhase, isTrainingDay, dayName) {
       workoutDetailTitle.textContent = `💪 Trening na ${dayName} - ${currentPhase.name}`;
     }
     
-    // Use CURRENT PRs to calculate weights - this updates when PRs change!
     const squatWeight = Math.round(appData.currentPRs.squat.estimated1RM * currentPhase.exercises.squat.intensity);
     const benchWeight = Math.round(appData.currentPRs.bench.estimated1RM * currentPhase.exercises.bench.intensity);
     const deadliftWeight = Math.round(appData.currentPRs.deadlift.estimated1RM * currentPhase.exercises.deadlift.intensity);
@@ -756,7 +852,6 @@ function updateDetailedWorkout(currentPhase, isTrainingDay, dayName) {
           <p>💡 <strong>Tip:</strong> Bazowane na metodach Agaty Sitko</p>
           <p>🎪 Dostosuj ciężary do swojego samopoczucia</p>
           <p>🌸 Pamiętaj o rozgrzewce i cool-down!</p>
-          <p>🔥 <strong>Ciężary aktualizują się automatycznie gdy dodasz nowe PR!</strong></p>
         </div>
       </div>
     `;
@@ -785,7 +880,6 @@ function updateMenstrualCycleStatus() {
     recommendation = "Może być ciężej - skupy się na technice i objętości 🎯";
   }
   
-  // Update UI elements
   const cyclePhaseElement = document.getElementById('cycle-phase');
   const cycleDayElement = document.getElementById('cycle-day');
   const daysSincePeriodElement = document.getElementById('days-since-period');
@@ -801,7 +895,7 @@ function updateNutritionTargets() {
   const currentDate = new Date(appData.currentDate);
   const dayOfWeek = currentDate.getDay();
   const dayName = getDayOfWeekPolish(currentDate);
-  const isRestDay = dayOfWeek === 5; // Friday
+  const isRestDay = dayOfWeek === 5;
   
   const nutritionTitle = document.getElementById('nutrition-title');
   const nutritionStatus = document.getElementById('nutrition-status');
@@ -810,22 +904,14 @@ function updateNutritionTargets() {
   let calories, protein, carbs, fat;
   
   if (isRestDay) {
-    calories = 2200;
-    protein = 160;
-    carbs = 250;
-    fat = 70;
-    
+    calories = 2200; protein = 160; carbs = 250; fat = 70;
     if (nutritionTitle) nutritionTitle.textContent = `🥗 Żywienie na ${dayName}`;
     if (nutritionStatus) {
       nutritionStatus.textContent = 'Dzień odpoczynku';
       nutritionStatus.className = 'status status--warning';
     }
   } else {
-    calories = 2500;
-    protein = 180;
-    carbs = 280;
-    fat = 85;
-    
+    calories = 2500; protein = 180; carbs = 280; fat = 85;
     if (nutritionTitle) nutritionTitle.textContent = `🥗 Żywienie na ${dayName}`;
     if (nutritionStatus) {
       nutritionStatus.textContent = 'Dzień treningowy';
@@ -843,50 +929,23 @@ function updateNutritionTargets() {
               <span class="nutrient-name">Kalorie</span>
               <span class="nutrient-target">${calories} kcal</span>
             </div>
-            <div class="nutrient-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 0%"></div>
-              </div>
-              <span class="nutrient-current">0 kcal</span>
-            </div>
           </div>
-          
           <div class="nutrient-card">
             <div class="nutrient-header">
               <span class="nutrient-name">Białko</span>
               <span class="nutrient-target">${protein}g</span>
             </div>
-            <div class="nutrient-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 0%"></div>
-              </div>
-              <span class="nutrient-current">0g</span>
-            </div>
           </div>
-          
           <div class="nutrient-card">
             <div class="nutrient-header">
               <span class="nutrient-name">Węglowodany</span>
               <span class="nutrient-target">${carbs}g</span>
             </div>
-            <div class="nutrient-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 0%"></div>
-              </div>
-              <span class="nutrient-current">0g</span>
-            </div>
           </div>
-          
           <div class="nutrient-card">
             <div class="nutrient-header">
               <span class="nutrient-name">Tłuszcz</span>
               <span class="nutrient-target">${fat}g</span>
-            </div>
-            <div class="nutrient-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: 0%"></div>
-              </div>
-              <span class="nutrient-current">0g</span>
             </div>
           </div>
         </div>
@@ -894,12 +953,8 @@ function updateNutritionTargets() {
         <div class="nutrition-tips">
           <h5>💡 ${isRestDay ? 'Wskazówki na dzień odpoczynku' : 'Wskazówki na dzień treningowy'}</h5>
           ${isRestDay ? 
-            `<p>🌙 Utrzymuj stabilny poziom cukru we krwi. Skup się na jakościowych źródłach białka i zdrowych tłuszczach.</p>
-             <p>💧 Pij dużo wody (minimum 2.5L)</p>
-             <p>🥬 Zwiększ spożycie warzyw liściastych</p>` :
-            `<p>💪 Zwiększ spożycie węglowodanów 2-3h przed treningiem. Po treningu skup się na białku (25-30g) i węglowodanach prostych.</p>
-             <p>⏰ Posiłek potreningowy w ciągu 30 minut</p>
-             <p>💧 Pij dużo wody (minimum 3L w dni treningowe)</p>`
+            '<p>🌙 Utrzymuj stabilny poziom cukru we krwi. Skup się na jakościowych źródłach białka i zdrowych tłuszczach.</p>' :
+            '<p>💪 Zwiększ spożycie węglowodanów 2-3h przed treningiem. Po treningu białko (25-30g) i węglowodany proste.</p>'
           }
         </div>
       </div>
@@ -909,7 +964,7 @@ function updateNutritionTargets() {
 
 function updateCompetitionCountdown() {
   const currentDate = new Date(appData.currentDate);
-  const competitionDate = new Date('2026-03-30'); // End of peaking phase
+  const competitionDate = new Date('2026-03-30');
   const daysToCompetition = Math.ceil((competitionDate - currentDate) / (1000 * 60 * 60 * 24));
   
   const competitionCountdownElement = document.getElementById('competition-countdown');
@@ -927,7 +982,6 @@ function updateCompetitionCountdown() {
 function updateProgressTimelines() {
   const currentDate = new Date(appData.currentDate);
   
-  // Update PR age display
   updatePRDaysAgo('squat', currentDate);
   updatePRDaysAgo('bench', currentDate);
   updatePRDaysAgo('deadlift', currentDate);
@@ -967,7 +1021,7 @@ function getCurrentTrainingPhase() {
     }
   }
   
-  return appData.trainingPhases.phase1; // Default to phase 1
+  return appData.trainingPhases.phase1;
 }
 
 function formatDatePolish(dateString) {
@@ -987,18 +1041,25 @@ function getDayOfWeekPolish(date) {
   return days[date.getDay()];
 }
 
-function setToday() {
+function getMonthNamePolish(monthIndex) {
+  const months = [
+    'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+    'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
+  ];
+  return months[monthIndex];
+}
+
+window.setToday = function() {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('current-date-picker').value = today;
   updateCurrentDate(today);
 }
 
-// ==== AUTO-BACKUP SYSTEM ====
+// ==== SILENT AUTO-BACKUP ====
 
 function initializeAutoBackup() {
-  console.log('💾 Initializing auto-backup...');
+  console.log('💾 Initializing silent auto-backup...');
   
-  // Manual backup button
   const manualBackupBtn = document.getElementById('manual-backup-btn');
   const createBackupBtn = document.getElementById('create-backup-btn');
   const exportTrainerBtn = document.getElementById('export-trainer-btn');
@@ -1020,24 +1081,18 @@ function initializeAutoBackup() {
     restoreFileInput.addEventListener('change', handleFileRestore);
   }
   
-  console.log('💾 Auto-Backup System initialized');
+  console.log('💾 Silent auto-backup initialized');
 }
 
 function trackChange(changeDescription = 'Dodano dane') {
   appData.autoBackup.changesCount++;
-  
   console.log(`📊 Change tracked: ${changeDescription} (${appData.autoBackup.changesCount}/${appData.autoBackup.maxChanges})`);
   
-  // LIVE SAVE every change!
+  // Silent save - no notifications
   saveDataToStorage();
-  
-  // Update UI
   updateAutoBackupUI();
   
-  // Show notification when backup is ready
-  if (appData.autoBackup.changesCount === appData.autoBackup.maxChanges) {
-    showNotification('info', '💾 Auto-backup gotowy!', 'Kliknij Manual Backup aby pobrać plik.');
-  }
+  // NO auto-download, just track
 }
 
 function performManualBackup() {
@@ -1049,42 +1104,32 @@ function performManualBackup() {
     
     downloadBackupFile(backupData, fileName);
     
-    // Reset counter
     appData.autoBackup.changesCount = 0;
     appData.autoBackup.lastBackup = new Date().toISOString();
     
-    // LIVE SAVE the reset
     saveDataToStorage();
     updateAutoBackupUI();
     
-    showNotification('success', '✅ Manual backup wykonany!', 'Backup został pobrany pomyślnie!');
+    showSaveIndicator('✅ Backup pobrany!', '#22c55e');
     
   } catch (error) {
     console.error('❌ Manual backup failed:', error);
-    showNotification('error', '❌ Błąd!', 'Backup nie powiódł się!');
+    showSaveIndicator('❌ Błąd backupu', '#ef4444');
   }
 }
 
 function exportForTrainer() {
   try {
-    console.log('📊 Creating trainer export...');
-    
     const trainerData = {
       exportType: 'trainer-analysis',
       version: appData.version,
       timestamp: new Date().toISOString(),
       currentDate: appData.currentDate,
-      
-      // Current status
       currentPRs: appData.currentPRs,
       currentMeasurements: appData.measurements[appData.measurements.length - 1] || null,
       currentPhase: getCurrentTrainingPhase(),
-      
-      // Historical data
       prHistory: appData.prHistory,
       measurementsHistory: appData.measurements,
-      
-      // Health data
       menstrualCycle: appData.menstrualCycle,
       bodyGoals: appData.bodyGoals
     };
@@ -1093,11 +1138,11 @@ function exportForTrainer() {
     const jsonString = JSON.stringify(trainerData, null, 2);
     downloadJsonFile(jsonString, fileName);
     
-    showNotification('success', '📊 Export dla trenera gotowy!', 'Wyślij ten plik swojemu AI trenerowi do analizy!');
+    showSaveIndicator('📊 Export dla trenera gotowy!', '#3b82f6');
     
   } catch (error) {
     console.error('❌ Trainer export failed:', error);
-    showNotification('error', '❌ Błąd!', 'Export nie powiódł się!');
+    showSaveIndicator('❌ Export failed', '#ef4444');
   }
 }
 
@@ -1140,22 +1185,18 @@ function downloadJsonFile(jsonString, fileName) {
 function updateAutoBackupUI() {
   const changesCount = appData.autoBackup.changesCount;
   const maxChanges = appData.autoBackup.maxChanges;
-  const remaining = maxChanges - changesCount;
   const progressPercent = (changesCount / maxChanges) * 100;
   
-  // Update counter in menu
   const backupCounter = document.getElementById('backup-counter');
   if (backupCounter) {
     backupCounter.textContent = `${changesCount}/${maxChanges} zmian`;
   }
   
-  // Update progress bar in menu
   const backupProgressFill = document.getElementById('backup-progress-fill');
   if (backupProgressFill) {
     backupProgressFill.style.width = `${progressPercent}%`;
   }
   
-  // Update backup status page elements
   const changesSinceBackup = document.getElementById('changes-since-backup');
   if (changesSinceBackup) {
     changesSinceBackup.textContent = changesCount;
@@ -1174,6 +1215,7 @@ function updateAutoBackupUI() {
   
   const nextBackup = document.getElementById('next-backup');
   if (nextBackup) {
+    const remaining = maxChanges - changesCount;
     if (remaining > 0) {
       nextBackup.textContent = `Po ${remaining} zmianach`;
     } else {
@@ -1187,7 +1229,7 @@ function handleFileRestore(event) {
   if (!file) return;
   
   if (!file.name.includes('6xSBD-backup') || !file.name.endsWith('.json')) {
-    showNotification('error', '❌ Błąd!', 'To nie wygląda na plik backupu 6xSBD.');
+    showSaveIndicator('❌ Błędny plik', '#ef4444');
     return;
   }
   
@@ -1200,39 +1242,35 @@ function handleFileRestore(event) {
         throw new Error('Invalid backup format');
       }
       
-      // Restore data
       appData = { ...backupData.appData };
       
-      // Update date picker
       const datePicker = document.getElementById('current-date-picker');
       if (datePicker) {
         datePicker.value = appData.currentDate;
       }
       
-      // LIVE SAVE and refresh UI
       saveDataToStorage();
       updateDashboard();
       updateAllDateDependencies();
       updateAutoBackupUI();
       updateCharts();
       
-      showNotification('success', '✅ Dane przywrócone!', 'Backup został załadowany pomyślnie!');
+      showSaveIndicator('✅ Dane przywrócone!', '#22c55e');
       
     } catch (error) {
       console.error('❌ Restore failed:', error);
-      showNotification('error', '❌ Błąd!', 'Nie można odczytać pliku backupu.');
+      showSaveIndicator('❌ Błąd przywracania', '#ef4444');
     }
   };
   
   reader.readAsText(file);
 }
 
-// ==== FORMS AND USER INPUT ====
+// ==== FORMS ====
 
 function initializeForms() {
   console.log('📝 Initializing forms...');
   
-  // PR Form
   const prForm = document.getElementById('pr-form');
   if (prForm) {
     prForm.addEventListener('submit', function(e) {
@@ -1241,7 +1279,6 @@ function initializeForms() {
     });
   }
   
-  // Measurements Form
   const measurementsForm = document.getElementById('measurements-form');
   if (measurementsForm) {
     measurementsForm.addEventListener('submit', function(e) {
@@ -1250,7 +1287,6 @@ function initializeForms() {
     });
   }
   
-  // Cycle Form
   const cycleForm = document.getElementById('cycle-form');
   if (cycleForm) {
     cycleForm.addEventListener('submit', function(e) {
@@ -1269,7 +1305,6 @@ function addNewPR() {
   const date = document.getElementById('pr-date').value;
   
   if (exercise && weight && reps && date) {
-    // Calculate estimated 1RM using Epley formula
     const estimated1RM = weight * (1 + reps / 30);
     
     const newPR = {
@@ -1279,35 +1314,27 @@ function addNewPR() {
       estimated1RM: Math.round(estimated1RM * 10) / 10
     };
     
-    // Update current PRs
     appData.currentPRs[exercise] = newPR;
     
-    // Add to history
     if (!appData.prHistory[exercise]) {
       appData.prHistory[exercise] = [];
     }
     appData.prHistory[exercise].push(newPR);
-    
-    // Sort history by date
     appData.prHistory[exercise].sort((a, b) => new Date(a.date) - new Date(b.date));
     
-    // Track change for auto-backup + LIVE SAVE
     trackChange(`Nowe PR ${exercise}: ${weight}kg x${reps}`);
     
-    // Update UI - this will show new weights in all workouts!
     updateDashboard();
     updateAllDateDependencies();
     updateCharts();
     
-    // Clear form
     document.getElementById('pr-form').reset();
     
-    // Add haptic feedback
     if (navigator.vibrate) {
       navigator.vibrate([50, 50, 50]);
     }
     
-    showNotification('success', `🏆 Nowe PR ${exercise}!`, `${weight}kg x${reps} - wszystkie treningi zaktualizowane!`);
+    showSaveIndicator(`🏆 Nowe PR ${exercise}!`, '#22c55e');
   }
 }
 
@@ -1331,7 +1358,6 @@ function addNewMeasurement() {
   appData.measurements.push(newMeasurement);
   appData.measurements.sort((a, b) => new Date(a.date) - new Date(b.date));
   
-  // Update current stats with latest measurement
   const latest = appData.measurements[appData.measurements.length - 1];
   appData.bodyGoals.current = {
     weight: latest.weight,
@@ -1341,17 +1367,15 @@ function addNewMeasurement() {
     bodyWater: latest.bodyWater
   };
   
-  // Track change for auto-backup + LIVE SAVE
   trackChange('Dodano nowy pomiar');
   
   updateDashboard();
   updateAllDateDependencies();
   updateCharts();
   
-  // Clear form
   document.getElementById('measurements-form').reset();
   
-  showNotification('success', '📊 Nowy pomiar dodany!', 'Dane zostały zapisane!');
+  showSaveIndicator('📊 Nowy pomiar dodany!', '#22c55e');
 }
 
 function updateCycleData() {
@@ -1364,27 +1388,24 @@ function updateCycleData() {
     appData.menstrualCycle.lastPeriodEnd = periodEnd;
     appData.menstrualCycle.cycleLength = cycleLength;
     
-    // Calculate period length
     const start = new Date(periodStart);
     const end = new Date(periodEnd);
     const periodLength = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
     
     appData.menstrualCycle.periodLength = periodLength;
     
-    // Track change for auto-backup + LIVE SAVE
     trackChange('Zaktualizowano cykl menstruacyjny');
     
     updateMenstrualCycleStatus();
     updateDashboard();
     
-    // Clear form
     document.getElementById('cycle-form').reset();
     
-    showNotification('success', '🌙 Cykl zaktualizowany!', 'Dane zostały zapisane!');
+    showSaveIndicator('🌙 Cykl zaktualizowany!', '#22c55e');
   }
 }
 
-// ==== CHARTS FUNCTIONALITY ====
+// ==== CHARTS ====
 
 function initializeCharts() {
   console.log('📊 Initializing charts...');
@@ -1542,7 +1563,6 @@ function updateCharts() {
 function showSection(sectionName) {
   console.log(`📱 Showing section: ${sectionName}`);
   
-  // Update active section
   const sections = document.querySelectorAll('.section');
   sections.forEach(section => section.classList.remove('section--active'));
   
@@ -1551,12 +1571,16 @@ function showSection(sectionName) {
     targetSection.classList.add('section--active');
   }
   
-  // Render specific content when section is activated
+  // Special handling for sections
   if (sectionName === 'progress' && charts.prChart) {
     setTimeout(() => {
       charts.prChart.resize();
       charts.bodyChart?.resize();
     }, 100);
+  }
+  
+  if (sectionName === 'treningi') {
+    updateTrainingScheduleView();
   }
 }
 
@@ -1568,7 +1592,6 @@ function updateDashboard() {
 }
 
 function updatePRCards() {
-  // Update PR values in dashboard
   const prItems = document.querySelectorAll('.pr-item');
   prItems.forEach(item => {
     const label = item.querySelector('.pr-label').textContent.toLowerCase();
@@ -1585,21 +1608,18 @@ function updateBodyCompositionCard() {
   const current = appData.bodyGoals.current;
   const target = appData.bodyGoals.target;
   
-  // Update progress bars with CORRECT DATA
   const weightProgress = (target.weight / current.weight) * 100;
   const weightBar = document.querySelector('.comp-item:nth-child(1) .progress-fill');
   if (weightBar) {
     weightBar.style.width = `${Math.min(weightProgress, 100)}%`;
   }
   
-  // Update fat progress (reverse - lower is better)
   const fatProgress = (1 - (current.fatMass - target.fatMass) / current.fatMass) * 100;
   const fatBar = document.querySelector('.comp-item:nth-child(2) .progress-fill');
   if (fatBar) {
     fatBar.style.width = `${Math.max(0, Math.min(fatProgress, 100))}%`;
   }
   
-  // Update muscle progress
   const muscleProgress = (current.muscleMass / target.muscleMass) * 100;
   const muscleBar = document.querySelector('.comp-item:nth-child(3) .progress-fill');
   if (muscleBar) {
@@ -1607,89 +1627,10 @@ function updateBodyCompositionCard() {
   }
 }
 
-// ==== NOTIFICATION SYSTEM ====
-
-function showNotification(type, title, message, duration = 3000) {
-  console.log(`📢 Notification: ${type} - ${title}: ${message}`);
-  
-  const container = document.getElementById('notifications-container');
-  if (!container) {
-    // Create container if it doesn't exist
-    const newContainer = document.createElement('div');
-    newContainer.id = 'notifications-container';
-    newContainer.style.cssText = `
-      position: fixed;
-      top: 100px;
-      right: 16px;
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      max-width: 350px;
-      width: calc(100vw - 32px);
-    `;
-    document.body.appendChild(newContainer);
-  }
-  
-  const notification = document.createElement('div');
-  notification.style.cssText = `
-    background: var(--color-surface, #fff);
-    border: 1px solid var(--color-pink-300, #E8B4CB);
-    border-radius: 12px;
-    padding: 16px;
-    box-shadow: 0 10px 15px -3px rgba(107, 91, 94, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    animation: slideInRight 0.3s ease;
-    border-left: 4px solid ${type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#3b82f6'};
-  `;
-  
-  const icons = {
-    success: '✅',
-    error: '❌',
-    warning: '⚠️',
-    info: 'ℹ️'
-  };
-  
-  notification.innerHTML = `
-    <div style="font-size: 18px;">${icons[type] || 'ℹ️'}</div>
-    <div style="flex: 1;">
-      <div style="font-weight: 600; margin-bottom: 4px;">${title}</div>
-      <div style="font-size: 14px; color: var(--color-text-secondary, #666);">${message}</div>
-    </div>
-    <button onclick="this.parentElement.remove()" style="background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px;">×</button>
-  `;
-  
-  const finalContainer = document.getElementById('notifications-container');
-  finalContainer.appendChild(notification);
-  
-  // Auto-remove after duration
-  setTimeout(() => {
-    if (notification.parentElement) {
-      notification.remove();
-    }
-  }, duration);
-  
-  // Limit to max 3 notifications
-  const notifications = finalContainer.children;
-  if (notifications.length > 3) {
-    notifications[0].remove();
-  }
-  
-  // Add haptic feedback for important notifications
-  if (navigator.vibrate && (type === 'success' || type === 'error')) {
-    navigator.vibrate(type === 'success' ? [25] : [50, 50, 50]);
-  }
-}
-
-// ==== INITIALIZE ON FIRST LOAD ====
-
-// Set default form values
+// Initialize on window load
 window.addEventListener('load', function() {
   console.log('🌸 Window loaded, setting defaults...');
   
-  // Set today's date as default for forms
   const today = new Date().toISOString().split('T')[0];
   
   const prDateInput = document.getElementById('pr-date');
@@ -1698,11 +1639,7 @@ window.addEventListener('load', function() {
   if (prDateInput) prDateInput.value = today;
   if (measurementDateInput) measurementDateInput.value = today;
   
-  // Initialize auto-backup UI
   updateAutoBackupUI();
   
-  // Show live saving notification
-  showNotification('info', '🌸 6xSBD PWA gotowa!', 'Menu hamburger i wszystkie funkcje działają. Live saving aktywne!', 5000);
-  
-  console.log('🎉 6xSBD PWA fully loaded with FIXED HAMBURGER MENU!');
+  console.log('🎉 6xSBD PWA FULLY LOADED - All browsers supported, silent saving, working Treningi tab!');
 });
