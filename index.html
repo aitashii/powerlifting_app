@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌸 Aitashii Powerlifting Tracker 🐱</title>
     
     <!-- PWA Meta Tags -->
-    <meta name="description" content="Personal Powerlifting Training Tracker with Firebase sync">
+    <meta name="description" content="Complete Powerlifting Training Tracker with Firebase sync">
     <meta name="theme-color" content="#D4A5A5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -25,12 +25,10 @@
     
     <!-- Firebase SDK -->
     <script type="module">
-      // Import Firebase functions
       import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
       import { getAuth, signInWithPopup, signOut, onAuthStateChanged, GithubAuthProvider } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
       import { getFirestore, doc, setDoc, getDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
       
-      // Firebase configuration
       const firebaseConfig = {
         apiKey: "AIzaSyDkCic6MtVJMr3LasUbAhNy6xRKHYG6Jps",
         authDomain: "aitashii-powerlifting.firebaseapp.com",
@@ -41,12 +39,10 @@
         measurementId: "G-4VK5P34B96"
       };
 
-      // Initialize Firebase
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
       const db = getFirestore(app);
       
-      // Make Firebase available globally
       window.firebaseAuth = auth;
       window.firebaseDb = db;
       window.firebaseSignInWithPopup = signInWithPopup;
@@ -64,7 +60,63 @@
 </head>
 <body>
     <div class="app">
-        <!-- 🍔 Mobile Header with Hamburger -->
+        <!-- 🎯 Navigation Tabs (Desktop Style) -->
+        <nav class="main-nav">
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-section="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </button>
+                <button class="nav-tab" data-section="today-workout">
+                    <span class="nav-icon">💪</span>
+                    <span class="nav-text">Today's Workout</span>
+                </button>
+                <button class="nav-tab" data-section="training-schedule">
+                    <span class="nav-icon">📅</span>
+                    <span class="nav-text">Training</span>
+                </button>
+                <button class="nav-tab" data-section="new-pr">
+                    <span class="nav-icon">🏆</span>
+                    <span class="nav-text">New PR</span>
+                </button>
+                <button class="nav-tab" data-section="measurements">
+                    <span class="nav-icon">📏</span>
+                    <span class="nav-text">Measurements</span>
+                </button>
+                <button class="nav-tab" data-section="cycle">
+                    <span class="nav-icon">🌙</span>
+                    <span class="nav-text">Cycle</span>
+                </button>
+                <button class="nav-tab" data-section="nutrition">
+                    <span class="nav-icon">🥗</span>
+                    <span class="nav-text">Nutrition</span>
+                </button>
+                <button class="nav-tab" data-section="progress">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Progress</span>
+                </button>
+                <button class="nav-tab" data-section="export">
+                    <span class="nav-icon">📤</span>
+                    <span class="nav-text">Export Data</span>
+                </button>
+            </div>
+            
+            <div class="nav-actions">
+                <button onclick="manualSync()" class="nav-action-btn">🔄 Sync</button>
+                
+                <div id="auth-status" class="auth-status">
+                    <button id="login-btn" class="nav-action-btn primary">
+                        🔐 Login
+                    </button>
+                    <div id="user-info" style="display: none;">
+                        <img id="user-avatar" class="user-avatar">
+                        <button id="logout-btn" class="nav-action-btn">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 📱 Mobile Header (for mobile view) -->
         <header class="mobile-header">
             <button id="hamburger-btn" class="hamburger-btn" aria-label="Menu">
                 <div class="hamburger-line"></div>
@@ -74,36 +126,18 @@
             
             <div class="header-brand">
                 <h1>🌸 Aitashii Powerlifting 🐱</h1>
-                <div class="date-control-header">
-                    <!-- REMOVED: Manual date picker - now auto-updating -->
-                    <div class="date-info" id="date-info">Ładowanie...</div>
-                    <button onclick="setToday()" class="btn btn--small">Odśwież</button>
-                    <button onclick="manualSync()" class="btn btn--small">🔄 Sync</button>
-                </div>
             </div>
             
-            <div class="header-actions">
-                <div id="auth-status">
-                    <button id="login-btn" class="btn btn--primary" style="display: none;">
-                        <span>🔐 Login</span>
-                    </button>
-                    <div id="user-info" style="display: none;">
-                        <img id="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; margin-right: 8px;">
-                        <button id="logout-btn" class="btn btn--small">Logout</button>
-                    </div>
-                </div>
+            <div class="header-sync">
+                <span id="sync-status" class="sync-status">📱 Local Mode</span>
             </div>
         </header>
 
-        <!-- 📱 Menu Overlay -->
+        <!-- 📱 Mobile Menu -->
         <div id="menu-overlay" class="menu-overlay"></div>
-
-        <!-- 🌸 Sliding Menu -->
         <nav id="sliding-menu" class="sliding-menu">
             <div class="menu-header">
-                <div class="menu-brand">
-                    <h2>🌸 Aitashii</h2>
-                </div>
+                <h2>🌸 Aitashii</h2>
                 <button id="close-menu-btn" class="close-menu-btn">&times;</button>
             </div>
             
@@ -112,301 +146,624 @@
                     <span class="menu-icon">📊</span>
                     <span class="menu-text">Dashboard</span>
                 </button>
-                <button class="menu-item" data-section="workout">
+                <button class="menu-item" data-section="today-workout">
                     <span class="menu-icon">💪</span>
-                    <span class="menu-text">Dzisiejszy Trening</span>
+                    <span class="menu-text">Today's Workout</span>
                 </button>
-                <button class="menu-item" data-section="treningi">
+                <button class="menu-item" data-section="training-schedule">
                     <span class="menu-icon">📅</span>
-                    <span class="menu-text">Treningi</span>
+                    <span class="menu-text">Training</span>
                 </button>
-                <button class="menu-item" data-section="zywienie">
-                    <span class="menu-icon">🥗</span>
-                    <span class="menu-text">Żywienie</span>
+                <button class="menu-item" data-section="new-pr">
+                    <span class="menu-icon">🏆</span>
+                    <span class="menu-text">New PR</span>
                 </button>
-                <button class="menu-item" data-section="progress">
-                    <span class="menu-icon">📈</span>
-                    <span class="menu-text">Progres</span>
+                <button class="menu-item" data-section="measurements">
+                    <span class="menu-icon">📏</span>
+                    <span class="menu-text">Measurements</span>
                 </button>
                 <button class="menu-item" data-section="cycle">
                     <span class="menu-icon">🌙</span>
-                    <span class="menu-text">Cykl</span>
+                    <span class="menu-text">Cycle</span>
                 </button>
-                <button class="menu-item" data-section="backup">
-                    <span class="menu-icon">💾</span>
-                    <span class="menu-text">Backup</span>
+                <button class="menu-item" data-section="nutrition">
+                    <span class="menu-icon">🥗</span>
+                    <span class="menu-text">Nutrition</span>
                 </button>
-            </div>
-            
-            <div class="menu-footer">
-                <div class="auto-backup-status">
-                    <span class="backup-counter" id="backup-counter">0/3 zmian</span>
-                    <div class="backup-progress">
-                        <div class="backup-progress-fill" id="backup-progress-fill"></div>
-                    </div>
-                </div>
-                <p class="menu-motivational">Każdy trening to krok naprzód! 💪🌸</p>
+                <button class="menu-item" data-section="progress">
+                    <span class="menu-icon">📈</span>
+                    <span class="menu-text">Progress</span>
+                </button>
+                <button class="menu-item" data-section="export">
+                    <span class="menu-icon">📤</span>
+                    <span class="menu-text">Export Data</span>
+                </button>
             </div>
         </nav>
 
-        <!-- 📱 Smart Notifications -->
-        <div id="notifications-container" class="notifications-container"></div>
-
         <!-- Main Content -->
-        <main class="main">
-            <div class="container">
-                
-                <!-- 📊 Dashboard Section -->
-                <section id="dashboard" class="section section--active">
-                    <div class="welcome-header">
-                        <h2>🌸 Dashboard 🐱</h2>
-                        <p class="welcome-subtitle">Twój personalny powerlifting tracker</p>
-                        <div id="sync-status" class="sync-status">
-                            <span id="sync-indicator">📱 Tryb lokalny</span>
-                        </div>
-                    </div>
+        <main class="main-content">
+            
+            <!-- 📊 DASHBOARD SECTION -->
+            <section id="dashboard" class="section section--active">
+                <div class="section-header">
+                    <h1>Dashboard</h1>
+                    <div class="current-date" id="current-date-display">Sunday, August 25, 2025</div>
+                </div>
 
-                    <!-- Date Status Card -->
-                    <div class="card date-status-card">
-                        <div class="card__header">
-                            <h3>📅 Status Dnia</h3>
-                            <div class="date-controls">
-                                <!-- REMOVED: Manual date picker -->
-                                <span class="auto-date-indicator">⏰ Auto-aktualizacja (Zurich)</span>
-                            </div>
+                <div class="dashboard-grid">
+                    <!-- Current PRs Card -->
+                    <div class="dashboard-card pr-card">
+                        <div class="card-header">
+                            <h3>Current PRs</h3>
+                            <span class="phase-badge" id="current-phase-badge">Phase 1: Hypertrophy</span>
                         </div>
-                        <div class="card__content">
-                            <div class="date-status-grid">
-                                <div class="status-item">
-                                    <div class="status-label">Aktualna Data</div>
-                                    <div class="status-value" id="current-date-display">25 sierpnia 2025</div>
+                        <div class="card-content">
+                            <div class="pr-list">
+                                <div class="pr-item">
+                                    <div class="pr-exercise">Squat</div>
+                                    <div class="pr-value" id="squat-pr-value">40kg x5</div>
+                                    <div class="pr-date" id="squat-pr-date">23.08.2025</div>
+                                    <div class="pr-estimated">(Est. 1RM: 45kg)</div>
                                 </div>
-                                <div class="status-item">
-                                    <div class="status-label">Typ Dnia</div>
-                                    <div class="status-value" id="day-type">Dzień treningowy</div>
+                                <div class="pr-item">
+                                    <div class="pr-exercise">Bench</div>
+                                    <div class="pr-value" id="bench-pr-value">45kg x1</div>
+                                    <div class="pr-date" id="bench-pr-date">23.08.2025</div>
+                                    <div class="pr-estimated">(Est. 1RM: 45kg)</div>
                                 </div>
-                                <div class="status-item">
-                                    <div class="status-label">Faza Treningu</div>
-                                    <div class="status-value" id="phase-indicator">Faza 1/4 - HYPERTROPHY</div>
-                                </div>
-                                <div class="status-item">
-                                    <div class="status-label">Do Zawodów</div>
-                                    <div class="status-value" id="competition-countdown">217 dni</div>
+                                <div class="pr-item">
+                                    <div class="pr-exercise">Deadlift</div>
+                                    <div class="pr-value" id="deadlift-pr-value">90kg x1</div>
+                                    <div class="pr-date" id="deadlift-pr-date">31.07.2025</div>
+                                    <div class="pr-estimated">(Est. 1RM: 90kg)</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Summary Grid -->
-                    <div class="summary-grid">
-                        <!-- Current PRs -->
-                        <div class="card">
-                            <div class="card__header">
-                                <h3>🏆 Aktualne PR</h3>
-                                <span class="status status--success">Aktywne</span>
-                            </div>
-                            <div class="card__content">
-                                <div class="pr-grid">
-                                    <div class="pr-item">
-                                        <div class="pr-label">Squat</div>
-                                        <div class="pr-value">40kg x5</div>
-                                        <div class="pr-date" id="squat-pr-days">2 dni temu</div>
-                                    </div>
-                                    <div class="pr-item">
-                                        <div class="pr-label">Bench</div>
-                                        <div class="pr-value">45kg</div>
-                                        <div class="pr-date" id="bench-pr-days">2 dni temu</div>
-                                    </div>
-                                    <div class="pr-item">
-                                        <div class="pr-label">Deadlift</div>
-                                        <div class="pr-value">90kg</div>
-                                        <div class="pr-date" id="deadlift-pr-days">25 dni temu</div>
+                    <!-- Body Composition Card -->
+                    <div class="dashboard-card body-comp-card">
+                        <div class="card-header">
+                            <h3>Body Composition</h3>
+                            <span class="target-badge">84.1kg → 72kg</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="body-comp-grid">
+                                <div class="comp-item">
+                                    <div class="comp-label">Weight:</div>
+                                    <div class="comp-values">
+                                        <span class="comp-current">84.1kg</span>
+                                        <div class="comp-arrow">→</div>
+                                        <span class="comp-target">72kg</span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Body Composition -->
-                        <div class="card">
-                            <div class="card__header">
-                                <h3>📊 Skład Ciała</h3>
-                                <span class="status status--info">W trakcie</span>
-                            </div>
-                            <div class="card__content">
-                                <div class="body-comp-grid">
-                                    <div class="comp-item">
-                                        <div class="comp-label">Cel wagowy</div>
-                                        <div class="comp-progress">
-                                            <div class="comp-current">84.1kg</div>
-                                            <div class="progress-bar">
-                                                <div class="progress-fill progress-fill--warning"></div>
-                                            </div>
-                                            <div class="comp-target">72kg</div>
-                                        </div>
+                                <div class="comp-item">
+                                    <div class="comp-label">Body Fat:</div>
+                                    <div class="comp-values">
+                                        <span class="comp-current highlight">38% (32.0kg)</span>
+                                        <div class="comp-arrow">→</div>
+                                        <span class="comp-target">18% (13.0kg)</span>
                                     </div>
-                                    <div class="comp-item">
-                                        <div class="comp-label">Redukcja tłuszczu</div>
-                                        <div class="comp-progress">
-                                            <div class="comp-current">32.7kg</div>
-                                            <div class="progress-bar">
-                                                <div class="progress-fill progress-fill--warning"></div>
-                                            </div>
-                                            <div class="comp-target">13.0kg</div>
-                                        </div>
+                                </div>
+                                <div class="comp-item">
+                                    <div class="comp-label">Muscle Mass:</div>
+                                    <div class="comp-values">
+                                        <span class="comp-current positive">44.3kg</span>
+                                        <div class="comp-arrow">→</div>
+                                        <span class="comp-target">50.2kg</span>
                                     </div>
-                                    <div class="comp-item">
-                                        <div class="comp-label">Wzrost mięśni</div>
-                                        <div class="comp-progress">
-                                            <div class="comp-current">27.1kg</div>
-                                            <div class="progress-bar">
-                                                <div class="progress-fill progress-fill--success"></div>
-                                            </div>
-                                            <div class="comp-target">32.7kg</div>
-                                        </div>
+                                </div>
+                                <div class="comp-item">
+                                    <div class="comp-label">Body Water:</div>
+                                    <div class="comp-values">
+                                        <span class="comp-current">36.1kg</span>
+                                        <div class="comp-arrow">→</div>
+                                        <span class="comp-target">43.1kg</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </section>
 
-                <!-- 💪 Workout Section -->
-                <section id="workout" class="section">
-                    <h2 id="workout-title">💪 Dzisiejszy Trening</h2>
-
-                    <div class="card">
-                        <div class="card__header">
-                            <h3 id="workout-detail-title">Trening na Poniedziałek</h3>
-                            <span id="workout-status" class="status status--success">Dzień treningowy</span>
+                    <!-- Today's Workout Card -->
+                    <div class="dashboard-card workout-card">
+                        <div class="card-header">
+                            <h3>Today's Workout</h3>
+                            <span class="day-badge training" id="day-type-badge">Training Day</span>
                         </div>
-                        <div class="card__content">
-                            <div id="workout-summary" class="workout-summary">
-                                <!-- Will be populated by JavaScript -->
+                        <div class="card-content">
+                            <div class="workout-summary" id="workout-summary">
+                                <div class="workout-exercise">
+                                    <span class="exercise-name">Squat: 5x5 @ 30kg (67%)</span>
+                                </div>
+                                <div class="workout-exercise">
+                                    <span class="exercise-name">Bench: 4x6 @ 30kg (67%)</span>
+                                </div>
+                                <div class="workout-exercise">
+                                    <span class="exercise-name">Deadlift: 4x5 @ 60kg (67%)</span>
+                                </div>
+                                <div class="workout-exercise priority">
+                                    <span class="exercise-name">Accessories: Adductor work + Hip Thrusts</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <div class="card__header">
-                            <h3>📋 Szczegóły Treningu</h3>
+                    <!-- Cycle Phase Card -->
+                    <div class="dashboard-card cycle-card">
+                        <div class="card-header">
+                            <h3>Cycle Phase</h3>
+                            <span class="phase-badge follicular" id="cycle-phase-badge">Follicular Phase</span>
                         </div>
-                        <div class="card__content">
-                            <div id="workout-exercises">
-                                <!-- Will be populated by JavaScript -->
+                        <div class="card-content">
+                            <div class="cycle-info">
+                                <div class="cycle-item">
+                                    <div class="cycle-label">Cycle Day:</div>
+                                    <div class="cycle-value" id="cycle-day-value">6</div>
+                                </div>
+                                <div class="cycle-item">
+                                    <div class="cycle-label">Training Energy:</div>
+                                    <div class="cycle-value high" id="training-energy">High</div>
+                                </div>
+                                <div class="cycle-item">
+                                    <div class="cycle-label">Last Period:</div>
+                                    <div class="cycle-value" id="last-period-date">20.08.2025</div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </section>
 
-                <!-- 📅 Training Schedule Section -->
-                <section id="treningi" class="section">
-                    <h2>📅 Plan Treningowy</h2>
+                    <!-- Weekly Progress Card -->
+                    <div class="dashboard-card progress-card">
+                        <div class="card-header">
+                            <h3>Week 1 - Progress</h3>
+                            <span class="progress-badge">6/6 trainings</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="weekly-progress">
+                                <div class="progress-circles">
+                                    <div class="progress-circle completed">P</div>
+                                    <div class="progress-circle completed">W</div>
+                                    <div class="progress-circle completed">Ś</div>
+                                    <div class="progress-circle completed">C</div>
+                                    <div class="progress-circle rest">P</div>
+                                    <div class="progress-circle completed">S</div>
+                                    <div class="progress-circle completed">N</div>
+                                </div>
+                                <div class="volume-stats">
+                                    <span class="volume-label">Weekly Volume: 12,450kg</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Today's Nutrition Card -->
+                    <div class="dashboard-card nutrition-card">
+                        <div class="card-header">
+                            <h3>Today's Nutrition</h3>
+                            <span class="day-badge training" id="nutrition-day-badge">Training Day</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="nutrition-targets">
+                                <div class="nutrition-item">
+                                    <div class="nutrition-label">Total Calories</div>
+                                    <div class="nutrition-value">2500</div>
+                                </div>
+                                <div class="nutrition-item">
+                                    <div class="nutrition-label">Protein</div>
+                                    <div class="nutrition-value">180g</div>
+                                </div>
+                                <div class="nutrition-item">
+                                    <div class="nutrition-label">Carbs</div>
+                                    <div class="nutrition-value">280g</div>
+                                </div>
+                                <div class="shake-recommendation">
+                                    My shake: 278 kcal, 53.5g protein
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Technical Optimizations Card -->
+                    <div class="dashboard-card tech-card">
+                        <div class="card-header">
+                            <h3>Technical Optimizations</h3>
+                            <span class="ape-badge">APE 1036</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="tech-optimizations">
+                                <div class="tech-item squat">
+                                    <span class="tech-label">Squat:</span>
+                                    <span class="tech-desc">Standard stance, hip-width apart</span>
+                                </div>
+                                <div class="tech-item bench">
+                                    <span class="tech-label">Bench:</span>
+                                    <span class="tech-desc">Wide grip, maximal arch</span>
+                                </div>
+                                <div class="tech-item deadlift">
+                                    <span class="tech-label">Deadlift:</span>
+                                    <span class="tech-desc">Conventional, hip-width stance</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Competition Countdown Card -->
+                    <div class="dashboard-card competition-card">
+                        <div class="card-header">
+                            <h3>Regional Competition</h3>
+                            <span class="comp-badge drug-free">Swiss - Drug Free</span>
+                        </div>
+                        <div class="card-content">
+                            <div class="competition-countdown">
+                                <div class="countdown-main">
+                                    <div class="countdown-number">215</div>
+                                    <div class="countdown-label">days</div>
+                                </div>
+                                <div class="countdown-secondary">
+                                    <div class="countdown-number">30</div>
+                                    <div class="countdown-label">weeks</div>
+                                </div>
+                            </div>
+                            <div class="competition-goals">
+                                <div class="goal-item">Squat: 60kg (+15kg)</div>
+                                <div class="goal-item">Bench: 65kg (+20kg)</div>
+                                <div class="goal-item">Deadlift: 120kg (+30kg)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 💪 TODAY'S WORKOUT SECTION -->
+            <section id="today-workout" class="section">
+                <div class="section-header">
+                    <h1>Today's Workout - Sunday 25.08.2025</h1>
+                    <div class="workout-controls">
+                        <div class="phase-info">
+                            <span class="phase-badge">Phase 1: Hypertrophy + Rehab</span>
+                            <span class="week-info">Week 1/6 | Day 7/7</span>
+                        </div>
+                        <div class="timer-controls">
+                            <button id="start-workout-timer" class="timer-btn primary">Start Timer</button>
+                            <div class="workout-timer" id="workout-timer">00:00:00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Exercises -->
+                <div class="workout-section">
+                    <h2>Main Exercises</h2>
                     
-                    <div class="card">
-                        <div class="card__header">
-                            <h3>🗓️ Kalendarz Treningowy</h3>
-                            <span class="status status--info">Sierpień 2025</span>
+                    <!-- Squat -->
+                    <div class="exercise-block">
+                        <div class="exercise-header">
+                            <h3>Squat</h3>
+                            <span class="intensity-badge">70% (32.5kg)</span>
                         </div>
-                        <div class="card__content">
-                            <div id="training-calendar">
-                                <!-- Will be populated by JavaScript -->
+                        <div class="exercise-sets">
+                            <div class="warmup-section">
+                                <h4>Warm-up:</h4>
+                                <div class="set-item warmup">
+                                    <input type="checkbox" id="squat-warmup">
+                                    <label for="squat-warmup">Warm-up: 22.5kg x 8</label>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 🥗 Nutrition Section -->
-                <section id="zywienie" class="section">
-                    <h2 id="nutrition-title">🥗 Żywienie</h2>
-                    
-                    <div class="card">
-                        <div class="card__header">
-                            <h3>🎯 Dzienne Cele</h3>
-                            <span id="nutrition-status" class="status status--success">Dzień treningowy</span>
-                        </div>
-                        <div class="card__content">
-                            <div id="nutrition-targets">
-                                <!-- Will be populated by JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 📈 Progress Section -->
-                <section id="progress" class="section">
-                    <h2>📈 Twój Progres</h2>
-                    
-                    <!-- Charts Grid -->
-                    <div class="summary-grid">
-                        <div class="card">
-                            <div class="card__header">
-                                <h3>🏆 Progres Siłowy</h3>
-                            </div>
-                            <div class="card__content">
-                                <div style="height: 400px;">
-                                    <canvas id="pr-chart"></canvas>
+                            <div class="working-sets">
+                                <h4>Working Sets:</h4>
+                                <div class="set-item">
+                                    <input type="checkbox" id="squat-set1">
+                                    <label for="squat-set1">Set 1: 32.5kg x 8-10</label>
+                                    <button class="rest-timer-btn" onclick="startRestTimer(150)">2.5min</button>
+                                </div>
+                                <div class="set-item">
+                                    <input type="checkbox" id="squat-set2">
+                                    <label for="squat-set2">Set 2: 32.5kg x 8-10</label>
+                                    <button class="rest-timer-btn" onclick="startRestTimer(150)">2.5min</button>
+                                </div>
+                                <div class="set-item">
+                                    <input type="checkbox" id="squat-set3">
+                                    <label for="squat-set3">Set 3: 32.5kg x 8-10</label>
+                                    <button class="rest-timer-btn" onclick="startRestTimer(150)">2.5min</button>
                                 </div>
                             </div>
                         </div>
+                        <div class="exercise-notes">
+                            <textarea placeholder="Notes..."></textarea>
+                        </div>
+                    </div>
 
-                        <div class="card">
-                            <div class="card__header">
-                                <h3>📊 Skład Ciała</h3>
-                            </div>
-                            <div class="card__content">
-                                <div style="height: 400px;">
-                                    <canvas id="body-composition-chart"></canvas>
+                    <!-- Bench Press -->
+                    <div class="exercise-block">
+                        <div class="exercise-header">
+                            <h3>Bench Press</h3>
+                            <span class="intensity-badge">65% (30kg)</span>
+                        </div>
+                        <div class="exercise-sets">
+                            <div class="warmup-section">
+                                <h4>Warm-up:</h4>
+                                <div class="set-item warmup">
+                                    <input type="checkbox" id="bench-warmup">
+                                    <label for="bench-warmup">Warm-up: 20kg x 8</label>
                                 </div>
+                            </div>
+                            <div class="working-sets">
+                                <h4>Working Sets:</h4>
+                                <div class="set-item">
+                                    <input type="checkbox" id="bench-set1">
+                                    <label for="bench-set1">Set 1: 30kg x 6-8</label>
+                                    <button class="rest-timer-btn" onclick="startRestTimer(120)">2min</button>
+                                </div>
+                                <div class="set-item">
+                                    <input type="checkbox" id="bench-set2">
+                                    <label for="bench-set2">Set 2: 30kg x 6-8</label>
+                                    <button class="rest-timer-btn" onclick="startRestTimer(120)">2min</button>
+                                </div>
+                                <div class="set-item">
+                                    <input type="checkbox" id="bench-set3">
+                                    <label for="bench-set3">Set 3: 30kg x 6-8</label>
+                                    <button class="rest-timer-btn" onclick="startRestTimer(120)">2min</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="exercise-notes">
+                            <textarea placeholder="Notes..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accessories (Priority: Adductors) -->
+                <div class="workout-section">
+                    <h2>Accessories (Priority: Adductors)</h2>
+                    
+                    <div class="exercise-block priority">
+                        <div class="exercise-header">
+                            <h3>Adductor work (PRIORITY!)</h3>
+                            <span class="priority-badge">PRIORITY</span>
+                        </div>
+                        <div class="exercise-sets">
+                            <div class="set-item">
+                                <input type="checkbox" id="adductor-set1">
+                                <label for="adductor-set1">Cossack Squats: 3x12-15</label>
+                                <button class="rest-timer-btn" onclick="startRestTimer(60)">1min</button>
+                            </div>
+                            <div class="set-item">
+                                <input type="checkbox" id="adductor-set2">
+                                <label for="adductor-set2">Lateral Lunges: 3x10/leg</label>
+                                <button class="rest-timer-btn" onclick="startRestTimer(60)">1min</button>
+                            </div>
+                            <div class="set-item">
+                                <input type="checkbox" id="adductor-set3">
+                                <label for="adductor-set3">Copenhagen Planks: 3x30s</label>
+                                <button class="rest-timer-btn" onclick="startRestTimer(90)">1.5min</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Add New PR -->
-                    <div class="card">
-                        <div class="card__header">
-                            <h3>🆕 Dodaj Nowe PR</h3>
+                    <div class="exercise-block">
+                        <div class="exercise-header">
+                            <h3>Hip Thrusts</h3>
                         </div>
-                        <div class="card__content">
-                            <form id="pr-form" class="form">
+                        <div class="exercise-sets">
+                            <div class="set-item">
+                                <input type="checkbox" id="hip-set1">
+                                <label for="hip-set1">Set 1: 3x12-15</label>
+                                <button class="rest-timer-btn" onclick="startRestTimer(60)">1min</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rest Timer Display -->
+                <div id="rest-timer-display" class="rest-timer-display">
+                    <div class="rest-timer-content">
+                        <div class="rest-timer-title">Rest Timer</div>
+                        <div class="rest-timer-countdown" id="rest-timer-countdown">02:30</div>
+                        <button class="stop-rest-timer" onclick="stopRestTimer()">Stop</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 📅 TRAINING SCHEDULE SECTION -->
+            <section id="training-schedule" class="section">
+                <div class="section-header">
+                    <h1>Training - Complete Program December 2025</h1>
+                </div>
+
+                <!-- Training Calendar -->
+                <div class="training-calendar">
+                    <div class="calendar-header">
+                        <h2>Training Calendar - Agata Sitko Program</h2>
+                        <div class="calendar-nav">
+                            <button class="calendar-nav-btn" onclick="changeCalendarMonth(-1)">← Previous week</button>
+                            <div class="current-week">Week 1 (25.08 - 31.08)</div>
+                            <button class="calendar-nav-btn" onclick="changeCalendarMonth(1)">Next week →</button>
+                        </div>
+                    </div>
+                    
+                    <div class="calendar-week">
+                        <div class="day-card" data-day="monday">
+                            <div class="day-header">Monday</div>
+                            <div class="day-number">25</div>
+                            <div class="day-type sbd">SBD TRAINING</div>
+                        </div>
+                        <div class="day-card" data-day="tuesday">
+                            <div class="day-header">Tuesday</div>
+                            <div class="day-number">26</div>
+                            <div class="day-type sbd">SBD TRAINING</div>
+                        </div>
+                        <div class="day-card" data-day="wednesday">
+                            <div class="day-header">Wednesday</div>
+                            <div class="day-number">27</div>
+                            <div class="day-type sbd">SBD TRAINING</div>
+                        </div>
+                        <div class="day-card" data-day="thursday">
+                            <div class="day-header">Thursday</div>
+                            <div class="day-number">28</div>
+                            <div class="day-type sbd">SBD TRAINING</div>
+                        </div>
+                        <div class="day-card" data-day="friday">
+                            <div class="day-header">Friday</div>
+                            <div class="day-number">29</div>
+                            <div class="day-type rest">REST</div>
+                        </div>
+                        <div class="day-card" data-day="saturday">
+                            <div class="day-header">Saturday</div>
+                            <div class="day-number">30</div>
+                            <div class="day-type sbd">SBD TRAINING</div>
+                        </div>
+                        <div class="day-card active" data-day="sunday">
+                            <div class="day-header">Sunday</div>
+                            <div class="day-number">31</div>
+                            <div class="day-type sbd">SBD TRAINING</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training Phases -->
+                <div class="training-phases">
+                    <h2>Training Phases</h2>
+                    
+                    <div class="phases-grid">
+                        <div class="phase-card active">
+                            <div class="phase-header">
+                                <h3>PHASE 1: HYPERTROPHY + REHAB</h3>
+                                <span class="phase-dates">25.08 - 06.10 (6 weeks)</span>
+                            </div>
+                            <div class="phase-details">
+                                <div class="phase-intensity">65-80% 1RM</div>
+                            </div>
+                        </div>
+                        
+                        <div class="phase-card">
+                            <div class="phase-header">
+                                <h3>PHASE 2: STRENGTH</h3>
+                                <span class="phase-dates">07.10 - 17.11 (6 weeks)</span>
+                            </div>
+                            <div class="phase-details">
+                                <div class="phase-intensity">80-90% 1RM</div>
+                            </div>
+                        </div>
+                        
+                        <div class="phase-card">
+                            <div class="phase-header">
+                                <h3>PHASE 3: POWER</h3>
+                                <span class="phase-dates">18.11 - 29.12 (6 weeks)</span>
+                            </div>
+                            <div class="phase-details">
+                                <div class="phase-intensity">90-100% 1RM</div>
+                            </div>
+                        </div>
+                        
+                        <div class="phase-card">
+                            <div class="phase-header">
+                                <h3>PHASE 4: PEAKING</h3>
+                                <span class="phase-dates">30.12 - 30.03 (12 weeks)</span>
+                            </div>
+                            <div class="phase-details">
+                                <div class="phase-intensity">Competition prep</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day Selection Info -->
+                <div class="day-selection">
+                    <h2>Select day from calendar</h2>
+                    <p>Click on a day in the calendar to see workout details.</p>
+                </div>
+            </section>
+
+            <!-- 🏆 NEW PR SECTION -->
+            <section id="new-pr" class="section">
+                <div class="section-header">
+                    <h1>New PR</h1>
+                </div>
+
+                <div class="pr-section-grid">
+                    <!-- Add New Record -->
+                    <div class="pr-card">
+                        <div class="card-header">
+                            <h2>Add New Record</h2>
+                        </div>
+                        <div class="card-content">
+                            <form id="pr-form" class="pr-form">
                                 <div class="form-group">
-                                    <label for="exercise">Ćwiczenie</label>
-                                    <select id="exercise" required>
-                                        <option value="">Wybierz ćwiczenie</option>
+                                    <label for="pr-exercise">Exercise</label>
+                                    <select id="pr-exercise" required>
+                                        <option value="">Choose exercise</option>
                                         <option value="squat">Squat</option>
                                         <option value="bench">Bench Press</option>
                                         <option value="deadlift">Deadlift</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="weight">Ciężar (kg)</label>
-                                    <input type="number" id="weight" step="0.5" min="0" required>
+                                    <label for="pr-weight">Weight (kg)</label>
+                                    <input type="number" id="pr-weight" step="0.5" min="0" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="reps">Powtórzenia</label>
-                                    <input type="number" id="reps" min="1" max="20" required>
+                                    <label for="pr-reps">Repetitions</label>
+                                    <input type="number" id="pr-reps" min="1" max="20" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="pr-date">Data</label>
+                                    <label for="pr-date">Date</label>
                                     <input type="date" id="pr-date" required>
                                 </div>
-                                <button type="submit" class="btn btn--primary">🏆 Dodaj PR</button>
+                                <button type="submit" class="btn btn--primary">Add PR & Update Program</button>
                             </form>
                         </div>
                     </div>
 
-                    <!-- Add New Measurement -->
-                    <div class="card">
-                        <div class="card__header">
-                            <h3>📏 Dodaj Pomiar</h3>
+                    <!-- Training Impact -->
+                    <div class="pr-card">
+                        <div class="card-header">
+                            <h2>Training Impact</h2>
                         </div>
-                        <div class="card__content">
-                            <form id="measurements-form" class="form">
+                        <div class="card-content">
+                            <p>After adding a new PR, all training weights will be automatically recalculated based on your new 1RM.</p>
+                            
+                            <div class="estimated-1rm">
+                                <h3>Estimated 1RM:</h3>
+                                <div class="estimate-display" id="estimated-1rm">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PR History -->
+                <div class="pr-history-card">
+                    <div class="card-header">
+                        <h2>PR History</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="pr-history-grid" id="pr-history-grid">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 📏 MEASUREMENTS SECTION -->
+            <section id="measurements" class="section">
+                <div class="section-header">
+                    <h1>Measurements</h1>
+                </div>
+
+                <div class="measurements-grid">
+                    <!-- Add New Measurement -->
+                    <div class="measurement-card">
+                        <div class="card-header">
+                            <h2>Add New Measurement</h2>
+                        </div>
+                        <div class="card-content">
+                            <form id="measurements-form" class="measurements-form">
                                 <div class="form-group">
-                                    <label for="measurement-date">Data</label>
+                                    <label for="measurement-date">Date</label>
                                     <input type="date" id="measurement-date" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="measurement-weight">Waga (kg)</label>
+                                    <label for="measurement-weight">Weight (kg)</label>
                                     <input type="number" id="measurement-weight" step="0.1" min="0" required>
                                 </div>
                                 <div class="form-group">
@@ -414,135 +771,165 @@
                                     <input type="number" id="measurement-bodyfat" step="0.1" min="0" max="100" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="measurement-muscle">Masa mięśniowa (kg)</label>
+                                    <label for="measurement-muscle">Muscle Mass (kg)</label>
                                     <input type="number" id="measurement-muscle" step="0.1" min="0" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="measurement-fatmass">Masa tłuszczowa (kg)</label>
+                                    <label for="measurement-fatmass">Fat Mass (kg)</label>
                                     <input type="number" id="measurement-fatmass" step="0.1" min="0" required>
                                 </div>
                                 <div class="form-group">
                                     <label for="measurement-bodywater">Body Water (kg)</label>
                                     <input type="number" id="measurement-bodywater" step="0.1" min="0" required>
                                 </div>
-                                <button type="submit" class="btn btn--primary">📊 Dodaj Pomiar</button>
+                                <button type="submit" class="btn btn--primary">Add Measurement</button>
                             </form>
                         </div>
                     </div>
-                </section>
 
-                <!-- 🌙 Menstrual Cycle Section -->
-                <section id="cycle" class="section">
-                    <h2>🌙 Cykl Menstruacyjny</h2>
-                    
-                    <div class="card">
-                        <div class="card__header">
-                            <h3>📊 Aktualny Status</h3>
+                    <!-- Current Stats -->
+                    <div class="measurement-card">
+                        <div class="card-header">
+                            <h2>Current Stats</h2>
                         </div>
-                        <div class="card__content">
-                            <div class="cycle-info">
-                                <div class="cycle-item">
-                                    <span class="cycle-label">Faza cyklu</span>
-                                    <span class="cycle-value" id="cycle-phase">Menstruacja</span>
-                                </div>
-                                <div class="cycle-item">
-                                    <span class="cycle-label">Dzień cyklu</span>
-                                    <span class="cycle-value" id="cycle-day">5/28</span>
-                                </div>
-                                <div class="cycle-item">
-                                    <span class="cycle-label">Dni od ostatniej</span>
-                                    <span class="cycle-value" id="days-since-period">5 dni</span>
-                                </div>
+                        <div class="card-content">
+                            <div class="stats-display" id="current-stats">
+                                <!-- Will be populated by JavaScript -->
                             </div>
-                            <div class="cycle-recommendation" id="cycle-recommendation">
-                                Lekkie treningi, słuchaj swojego ciała 🌙
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Charts -->
+                <div class="charts-section">
+                    <div class="chart-card">
+                        <h3>Body Composition Progress</h3>
+                        <canvas id="body-composition-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 🌙 CYCLE SECTION -->
+            <section id="cycle" class="section">
+                <div class="section-header">
+                    <h1>Menstrual Cycle</h1>
+                </div>
+
+                <div class="cycle-grid">
+                    <!-- Current Status -->
+                    <div class="cycle-card">
+                        <div class="card-header">
+                            <h2>Current Status</h2>
+                        </div>
+                        <div class="card-content">
+                            <div class="cycle-status" id="cycle-status">
+                                <!-- Will be populated by JavaScript -->
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <div class="card__header">
-                            <h3>📝 Aktualizuj Cykl</h3>
+                    <!-- Update Cycle -->
+                    <div class="cycle-card">
+                        <div class="card-header">
+                            <h2>Update Cycle</h2>
                         </div>
-                        <div class="card__content">
-                            <form id="cycle-form" class="form">
+                        <div class="card-content">
+                            <form id="cycle-form" class="cycle-form">
                                 <div class="form-group">
-                                    <label for="period-start">Początek ostatniej miesiączki</label>
+                                    <label for="period-start">Last period start</label>
                                     <input type="date" id="period-start" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="period-end">Koniec ostatniej miesiączki</label>
+                                    <label for="period-end">Last period end</label>
                                     <input type="date" id="period-end" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="cycle-length">Długość cyklu (dni)</label>
+                                    <label for="cycle-length">Cycle length (days)</label>
                                     <input type="number" id="cycle-length" min="21" max="35" value="28" required>
                                 </div>
-                                <button type="submit" class="btn btn--primary">🌙 Aktualizuj Cykl</button>
+                                <button type="submit" class="btn btn--primary">Update Cycle</button>
                             </form>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
-                <!-- 💾 Backup Section -->
-                <section id="backup" class="section">
-                    <h2>💾 Backup & Sync</h2>
-                    
-                    <div class="card backup-status-card">
-                        <div class="card__header">
-                            <h3>📊 Status Auto-Backup</h3>
-                            <span class="status status--info">Aktywny</span>
+            <!-- 🥗 NUTRITION SECTION -->
+            <section id="nutrition" class="section">
+                <div class="section-header">
+                    <h1>Nutrition</h1>
+                </div>
+
+                <div class="nutrition-content">
+                    <div class="nutrition-card">
+                        <div class="card-header">
+                            <h2>Daily Targets</h2>
+                            <span class="day-badge" id="nutrition-day-type">Training Day</span>
                         </div>
-                        <div class="card__content">
-                            <div class="backup-info">
-                                <div class="backup-stat">
-                                    <span class="stat-label">Zmiany od backupu</span>
-                                    <span class="stat-value" id="changes-since-backup">0</span>
-                                </div>
-                                <div class="backup-stat">
-                                    <span class="stat-label">Ostatni backup</span>
-                                    <span class="stat-value" id="last-backup-time">Brak</span>
-                                </div>
-                                <div class="backup-stat">
-                                    <span class="stat-label">Następny backup</span>
-                                    <span class="stat-value" id="next-backup">Po 3 zmianach</span>
-                                </div>
+                        <div class="card-content">
+                            <div class="nutrition-targets-detailed" id="nutrition-targets-detailed">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 📈 PROGRESS SECTION -->
+            <section id="progress" class="section">
+                <div class="section-header">
+                    <h1>Progress</h1>
+                </div>
+
+                <div class="progress-charts">
+                    <div class="chart-card">
+                        <h3>Strength Progress</h3>
+                        <canvas id="pr-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 📤 EXPORT DATA SECTION -->
+            <section id="export" class="section">
+                <div class="section-header">
+                    <h1>Export Data</h1>
+                </div>
+
+                <div class="export-grid">
+                    <div class="export-card">
+                        <div class="card-header">
+                            <h2>Complete Data Export</h2>
+                        </div>
+                        <div class="card-content">
+                            <p>Export all your training data, PRs, measurements, and cycle information for analysis or backup.</p>
+                            <div class="export-buttons">
+                                <button id="export-complete-btn" class="btn btn--primary">
+                                    📊 Export Complete Data
+                                </button>
+                                <button id="export-coach-btn" class="btn btn--secondary">
+                                    👩‍💼 Export for Coach
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="backup-actions">
-                        <div class="card">
-                            <div class="card__header">
-                                <h3>📤 Eksport Danych</h3>
-                            </div>
-                            <div class="card__content">
-                                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                    <button id="manual-backup-btn" class="btn btn--primary">
-                                        💾 Manual Backup
-                                    </button>
-                                    <button id="export-trainer-btn" class="btn btn--secondary">
-                                        📊 Export dla Trenera
-                                    </button>
-                                </div>
-                            </div>
+                    <div class="export-card">
+                        <div class="card-header">
+                            <h2>Data Summary</h2>
                         </div>
-
-                        <div class="restore-section">
-                            <h4>📥 Przywróć z Backupu</h4>
-                            <div id="backup-drop-zone" class="drop-zone">
-                                <p>Przeciągnij plik backupu tutaj lub kliknij aby wybrać</p>
-                                <input type="file" id="restore-file-input" accept=".json" style="display: none;">
+                        <div class="card-content">
+                            <div class="data-summary" id="data-summary">
+                                <!-- Will be populated by JavaScript -->
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
+            </section>
 
-            </div>
         </main>
     </div>
 
-    <!-- App JavaScript -->
+    <!-- JavaScript -->
     <script src="app.js"></script>
 </body>
 </html>
