@@ -75,9 +75,9 @@
             <div class="header-brand">
                 <h1>🌸 Aitashii Powerlifting 🐱</h1>
                 <div class="date-control-header">
-                    <input type="date" id="current-date-picker" class="date-input">
+                    <!-- REMOVED: Manual date picker - now auto-updating -->
                     <div class="date-info" id="date-info">Ładowanie...</div>
-                    <button onclick="setToday()" class="btn btn--small">Dziś</button>
+                    <button onclick="setToday()" class="btn btn--small">Odśwież</button>
                 </div>
             </div>
             
@@ -170,7 +170,8 @@
                         <div class="card__header">
                             <h3>📅 Status Dnia</h3>
                             <div class="date-controls">
-                                <input type="date" id="dashboard-date-picker" class="date-input">
+                                <!-- REMOVED: Manual date picker -->
+                                <span class="auto-date-indicator">⏰ Auto-aktualizacja (Zurich)</span>
                             </div>
                         </div>
                         <div class="card__content">
