@@ -6,6 +6,10 @@
     <title>🌸🐱 Aitashii Powerlifting Tracker - COMPLETE</title>
     <link rel="stylesheet" href="style-complete.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="app">
@@ -27,10 +31,20 @@
                 <button class="nav__item" data-section="progress">Progress</button>
             </div>
             
-            <div class="nav__backup">
-                <span id="backup-indicator" class="backup-indicator">
-                    Auto-backup: <span id="backup-counter">0/3 changes</span>
-                </span>
+            <div class="nav__auth">
+                <div class="nav__backup">
+                    <span id="backup-indicator" class="backup-indicator">
+                        Auto-backup: <span id="backup-counter">0/3 changes</span>
+                    </span>
+                </div>
+                <div id="auth-container">
+                    <!-- Auth buttons will be inserted here -->
+                </div>
+                <div id="user-info" class="user-info" style="display: none;">
+                    <img id="user-avatar" class="user-avatar" width="32" height="32" alt="User Avatar">
+                    <span id="user-name"></span>
+                    <button id="logout-btn" class="btn btn--sm btn--secondary">Logout</button>
+                </div>
             </div>
         </nav>
 
@@ -1026,6 +1040,11 @@
         </div>
     </div>
 
-    <script src="app-complete.js"></script>
+    <!-- Floating Sync Button -->
+    <button id="sync-button" class="sync-button" title="Sync to Cloud">
+        <span id="sync-text">☁️ Sync</span>
+    </button>
+
+    <script src="app-complete-sync.js"></script>
 </body>
 </html>
